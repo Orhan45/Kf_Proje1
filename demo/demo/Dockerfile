@@ -49,7 +49,7 @@ RUN chown -R springuser:springgroup /app
 COPY --from=builder /app/target/*.jar app.jar
 
 # Uygulama başladıktan sonra 8080 portunu dışarıya aç
-EXPOSE 8080
+EXPOSE 8081
 
 # Sağlık kontrolü ekle
 # Spring Boot Actuator'ı kullanıyorsanız, /actuator/health endpoint'ini kontrol edebilirsiniz.
