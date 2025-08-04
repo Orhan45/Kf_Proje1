@@ -3,12 +3,16 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor; // Gerekli constructor'lar için eklendi
+import lombok.AllArgsConstructor; // Gerekli constructor'lar için eklendi
 
 @Getter
 @Setter
 @Entity
 @Table(schema = "dbo", name = "URUN_BILGILERI")
-@IdClass(UrunBilgileriId.class) // Burayı ekledik
+@IdClass(UrunBilgileriId.class)
+@NoArgsConstructor // JPA için varsayılan constructor
+@AllArgsConstructor // Tüm alanları içeren constructor (isteğe bağlı ama genellikle faydalı)
 public class UrunBilgileri {
 
     @Id
@@ -23,5 +27,5 @@ public class UrunBilgileri {
     private Integer rehinDurum;
 
     @Column(name = "product_line_id")
-    private Integer productLineId;
+    private Long productLineId; // Burası Long olarak güncellendi!
 }
