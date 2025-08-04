@@ -29,6 +29,17 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(urunler);
     }
 
+    // YENİ ENDPOINT: Kredi numarasına ait sıra numaralarını döndürür
+    @GetMapping("/siralar/{krediNumarasi}")
+    public ResponseEntity<List<Integer>> getSiralarByKrediNumarasi(@PathVariable String krediNumarasi) {
+        List<Integer> siralar = service.getSiralarByKrediNumarasi(krediNumarasi);
+        if (siralar.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(siralar);
+    }
+
+
     @PutMapping("/{krediNumarasi}/{sira}")
     public ResponseEntity<UrunBilgileri> updateUrunBilgileri(
             @PathVariable String krediNumarasi,
@@ -41,14 +52,17 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(updated);
     }
 
-    // ARTIK SADECE BU DELETE ENDPOINT'İ KULLANILACAK: Kredi numarasına göre işlem yapacak
-    @DeleteMapping("/delete-and-reinsert-state-info-by-kredi/{krediNumarasi}")
-    public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(@PathVariable String krediNumarasi) {
-        boolean processed = service.deleteAndReinsertEgmStateInformationByKrediNumarasi(krediNumarasi);
-        if (processed) {
-            return ResponseEntity.ok("Kredi numarası: " + krediNumarasi + " ile eşleşen kaydın EgmStateInformation'ı başarıyla güncellendi.");
-        } else {
-            return ResponseEntity.status(404).body("Kredi numarası: " + krediNumarasi + " ile eşleşen kayıt bulunamadı veya işlem gerçekleştirilemedi.");
+    // GÜNCELLENMİŞ DELETE ENDPOINT: Kredi numarası ve isteğe bağlı sıra numarası ile işlem yapacak
+    // Not: @RequestParam kullanmak, sıra numarasının URL'de zorunlu olmamasını sağlar.
+    // Eğer sıra numarası verilmezse (null gelir), servis tüm sıra numaralarını işler.
+    @DeleteMapping("/delete-and-reinsert-state-info-by-kredi")
+    public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(
+            @RequestParam String krediNumarasi,
+            @RequestParam(required = false) Integer sira) { // Sira opsiyonel
+        String responseMessage = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
+        if (responseMessage.contains("bulunamadı")) { // Servis mesajına göre hata kodu dönebiliriz
+            return ResponseEntity.status(404).body(responseMessage);
         }
+        return ResponseEntity.ok(responseMessage);
     }
 }
