@@ -1,13 +1,12 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.UrunBilgileri; // Import güncellendi
-import com.example.demo.entity.UrunBilgileriId;
-import com.example.demo.entity.EgmStateInformation; // Import güncellendi
-import com.example.demo.repository.UrunBilgileriRepository;
+import com.example.demo.entity.EgmStateInformation;
+import com.example.demo.entity.UrunBilgileri;
 import com.example.demo.repository.EgmStateInformationRepository;
+import com.example.demo.repository.UrunBilgileriRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,55 +19,67 @@ public class UrunBilgileriService {
     private final UrunBilgileriRepository urunBilgileriRepository;
     private final EgmStateInformationRepository egmStateInformationRepository;
 
-    public List<UrunBilgileri> getAllUrunler() { // Metot imzası güncellendi
+    public List<UrunBilgileri> getAllUrunler() {
         return urunBilgileriRepository.findAll();
     }
 
-    public List<UrunBilgileri> getUrunlerByKrediNumarasi(String krediNumarasi) { // Metot imzası güncellendi
+    public List<UrunBilgileri> getUrunlerByKrediNumarasi(String krediNumarasi) {
         return urunBilgileriRepository.findByKrediNumarasi(krediNumarasi);
     }
 
-    public UrunBilgileri updateUrunBilgileri(String krediNumarasi, Integer sira, UrunBilgileri updatedUrunBilgileri) { // Metot imzası güncellendi
-        UrunBilgileriId id = new UrunBilgileriId(krediNumarasi, sira);
-        Optional<UrunBilgileri> existingUrunOptional = urunBilgileriRepository.findById(id); // Tip güncellendi
+    @Transactional
+    public UrunBilgileri updateUrunBilgileri(String krediNumarasi, Integer sira, UrunBilgileri urunBilgileri) {
+        Optional<UrunBilgileri> existingUrunOptional = urunBilgileriRepository.findById(new com.example.demo.entity.UrunBilgileriId(krediNumarasi, sira));
 
         if (existingUrunOptional.isPresent()) {
-            UrunBilgileri existingUrun = existingUrunOptional.get(); // Tip güncellendi
-            existingUrun.setRehinDurum(updatedUrunBilgileri.getRehinDurum());
-            existingUrun.setProductLineId(updatedUrunBilgileri.getProductLineId());
+            UrunBilgileri existingUrun = existingUrunOptional.get();
+            existingUrun.setRehinDurum(urunBilgileri.getRehinDurum());
+            existingUrun.setProductLineId(urunBilgileri.getProductLineId());
             return urunBilgileriRepository.save(existingUrun);
-        } else {
-            return null;
         }
+        return null;
     }
 
-    // Yeni metod: EgmStateInformation'a yeni bir kayıt ekle
     @Transactional
-    public EgmStateInformation createNewEgmStateInformation(Long productLineId) { // Tip güncellendi
-        EgmStateInformation newEntry = EgmStateInformation.builder() // Builder kullanımı güncellendi
+    public boolean deleteAndReinsertEgmStateInformation(Long productLineId) {
+        List<EgmStateInformation> existingRecords = egmStateInformationRepository.findByProductLineId(productLineId);
+
+        if (existingRecords.isEmpty()) {
+            return false;
+        }
+
+        egmStateInformationRepository.deleteByProductLineId(productLineId);
+
+        EgmStateInformation newRecord = EgmStateInformation.builder()
                 .productLineId(productLineId)
-                .stateId(7)
+                .stateId(99)
                 .stateStatus(1)
-                .message("BAŞARILI")
-                .levelInfo("info")
+                .message("Hasar sorgu atlatma işlemi tekrarlandı.")
+                .levelInfo("INFO")
                 .isDeleted(false)
                 .processDate(LocalDateTime.now())
                 .build();
 
-        return egmStateInformationRepository.save(newEntry);
+        egmStateInformationRepository.save(newRecord);
+        return true;
     }
 
-    // Belirli bir ürün bilgisini silen metod (güncellendi)
+    // SADECE BU METOT KULLANILACAK: Kredi numarasına göre productLineId'yi bulup işlem yapacak
     @Transactional
-    public boolean deleteAndReinsertEgmStateInformation(Long productLineId) {
-        List<EgmStateInformation> recordsToDelete = egmStateInformationRepository.findByProductLineId(productLineId); // Tip güncellendi
+    public boolean deleteAndReinsertEgmStateInformationByKrediNumarasi(String krediNumarasi) {
+        List<UrunBilgileri> urunler = urunBilgileriRepository.findByKrediNumarasi(krediNumarasi);
 
-        if (recordsToDelete.isEmpty()) {
-            return false;
-        } else {
-            egmStateInformationRepository.deleteByProductLineId(productLineId);
-            createNewEgmStateInformation(productLineId);
-            return true;
+        if (urunler.isEmpty()) {
+            return false; // Bu kredi numarasına ait ürün bulunamadı
         }
+
+        // Kredi numarasına ait ilk productLineId'yi kullanıyoruz.
+        // Eğer bir kredi numarasına birden fazla productLineId eşleşiyorsa
+        // ve hepsini işlemeliysek, buradaki mantığı döngüye almalıyız.
+        // Veya sadece tek bir eşleşme beklentisi varsa, bu haliyle yeterli.
+        Long productLineIdToProcess = urunler.get(0).getProductLineId();
+
+        // productLineId'ye göre silme ve yeniden ekleme mantığını çağırıyoruz.
+        return deleteAndReinsertEgmStateInformation(productLineIdToProcess);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.UrunBilgileri; // Import güncellendi
+import com.example.demo.entity.UrunBilgileri;
 import com.example.demo.service.UrunBilgileriService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +16,13 @@ public class UrunBilgileriController {
     private final UrunBilgileriService service;
 
     @GetMapping
-    public List<UrunBilgileri> getProductionInformation() { // Metot imzası güncellendi
+    public List<UrunBilgileri> getProductionInformation() {
         return service.getAllUrunler();
     }
 
     @GetMapping("/kredi/{krediNumarasi}")
-    public ResponseEntity<List<UrunBilgileri>> getUrunlerByKrediNumarasi(@PathVariable String krediNumarasi) { // Metot imzası güncellendi
-        List<UrunBilgileri> urunler = service.getUrunlerByKrediNumarasi(krediNumarasi); // Tip güncellendi
+    public ResponseEntity<List<UrunBilgileri>> getUrunlerByKrediNumarasi(@PathVariable String krediNumarasi) {
+        List<UrunBilgileri> urunler = service.getUrunlerByKrediNumarasi(krediNumarasi);
         if (urunler.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -30,24 +30,25 @@ public class UrunBilgileriController {
     }
 
     @PutMapping("/{krediNumarasi}/{sira}")
-    public ResponseEntity<UrunBilgileri> updateUrunBilgileri( // Metot imzası güncellendi
-                                                              @PathVariable String krediNumarasi,
-                                                              @PathVariable Integer sira,
-                                                              @RequestBody UrunBilgileri urunBilgileri) { // Parametre tipi güncellendi
-        UrunBilgileri updated = service.updateUrunBilgileri(krediNumarasi, sira, urunBilgileri); // Tip güncellendi
+    public ResponseEntity<UrunBilgileri> updateUrunBilgileri(
+            @PathVariable String krediNumarasi,
+            @PathVariable Integer sira,
+            @RequestBody UrunBilgileri urunBilgileri) {
+        UrunBilgileri updated = service.updateUrunBilgileri(krediNumarasi, sira, urunBilgileri);
         if (updated == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/delete-and-reinsert-state-info/{productLineId}")
-    public ResponseEntity<String> deleteAndReinsertEgmStateInformation(@PathVariable Long productLineId) {
-        boolean processed = service.deleteAndReinsertEgmStateInformation(productLineId);
+    // ARTIK SADECE BU DELETE ENDPOINT'İ KULLANILACAK: Kredi numarasına göre işlem yapacak
+    @DeleteMapping("/delete-and-reinsert-state-info-by-kredi/{krediNumarasi}")
+    public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(@PathVariable String krediNumarasi) {
+        boolean processed = service.deleteAndReinsertEgmStateInformationByKrediNumarasi(krediNumarasi);
         if (processed) {
-            return ResponseEntity.ok("EgmStateInformation tablosundan product_line_id: " + productLineId + " ile eşleşen kayıt(lar) başarıyla silindi ve yeni bir kayıt eklendi.");
+            return ResponseEntity.ok("Kredi numarası: " + krediNumarasi + " ile eşleşen kaydın EgmStateInformation'ı başarıyla güncellendi.");
         } else {
-            return ResponseEntity.status(404).body("EgmStateInformation tablosunda product_line_id: " + productLineId + " ile eşleşen kayıt bulunamadı veya işlem gerçekleştirilemedi.");
+            return ResponseEntity.status(404).body("Kredi numarası: " + krediNumarasi + " ile eşleşen kayıt bulunamadı veya işlem gerçekleştirilemedi.");
         }
     }
 }
