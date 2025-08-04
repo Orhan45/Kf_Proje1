@@ -1,1 +1,42 @@
-package com.example.demo.repository; import com.example.demo.entity.UrunBilgileri; import com.example.demo.entity.UrunBilgileriId; // Burayı ekledik import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.stereotype.Repository; import java.util.List; @Repository public interface UrunBilgileriRepository extends JpaRepository<UrunBilgileri, UrunBilgileriId> { List<UrunBilgileri> findByKrediNumarasi(String krediNumarasi); } // Bu arayüz, UrunBilgileri nesnelerini yönetmek için JpaRepository'yi genişletir. package com.example.demo.service; import com.example.demo.entity.UrunBilgileri; import com.example.demo.entity.UrunBilgileriId; // Burayı ekledik import com.example.demo.repository.UrunBilgileriRepository; import lombok.RequiredArgsConstructor; import org.springframework.stereotype.Service; import java.util.List; import java.util.Optional; // Burayı ekledik @Service @RequiredArgsConstructor public class UrunBilgileriService { private final UrunBilgileriRepository repository; public List<UrunBilgileri> getAllUrunler() { return repository.findAll(); } // Kredi numarasına göre ürünleri getiren yeni metod public List<UrunBilgileri> getUrunlerByKrediNumarasi(String krediNumarasi) { return repository.findByKrediNumarasi(krediNumarasi); } // Belirli bir ürün bilgisini güncelleyen yeni metod public UrunBilgileri updateUrunBilgileri(String krediNumarasi, Integer sira, UrunBilgileri updatedUrunBilgileri) { UrunBilgileriId id = new UrunBilgileriId(krediNumarasi, sira); Optional<UrunBilgileri> existingUrunOptional = repository.findById(id); if (existingUrunOptional.isPresent()) { UrunBilgileri existingUrun = existingUrunOptional.get(); // Sadece güncellenebilecek alanları ayarla existingUrun.setRehinDurum(updatedUrunBilgileri.getRehinDurum()); existingUrun.setProductLineId(updatedUrunBilgileri.getProductLineId()); // Diğer alanlar (krediNumarasi, sira) birincil anahtar olduğu için güncellenmemeli return repository.save(existingUrun); } else { // Belirtilen kredi numarası ve sıraya sahip ürün bulunamazsa null veya hata döndürebilirsin return null; // Veya bir exception fırlatabilirsin } } } package com.example.demo.controller; import com.example.demo.entity.UrunBilgileri; import com.example.demo.service.UrunBilgileriService; import lombok.RequiredArgsConstructor; import org.springframework.http.ResponseEntity; // Burayı ekledik import org.springframework.web.bind.annotation.*; import java.util.List; @RestController @RequestMapping("/api/urunler") @RequiredArgsConstructor public class UrunBilgileriController { private final UrunBilgileriService service; @GetMapping public List<UrunBilgileri> getProductionInformation() { return service.getAllUrunler(); } // Kredi numarasına göre arama endpoint'i // GET http://localhost:8081/api/urunler/kredi/{krediNumarasi} @GetMapping("/kredi/{krediNumarasi}") public ResponseEntity<List<UrunBilgileri>> getUrunlerByKrediNumarasi(@PathVariable String krediNumarasi) { List<UrunBilgileri> urunler = service.getUrunlerByKrediNumarasi(krediNumarasi); if (urunler.isEmpty()) { return ResponseEntity.notFound().build(); } return ResponseEntity.ok(urunler); } // Kredi numarası ve sıraya göre güncelleme endpoint'i // PUT http://localhost:8081/api/urunler/{krediNumarasi}/{sira} // Request Body: { "rehinDurum": 1, "productLineId": 123 } @PutMapping("/{krediNumarasi}/{sira}") public ResponseEntity<UrunBilgileri> updateUrunBilgileri( @PathVariable String krediNumarasi, @PathVariable Integer sira, @RequestBody UrunBilgileri urunBilgileri) { UrunBilgileri updated = service.updateUrunBilgileri(krediNumarasi, sira, urunBilgileri); if (updated == null) { return ResponseEntity.notFound().build(); } return ResponseEntity.ok(updated); } } spring.application.name=demo server.port=8081 spring.devtools.restart.enabled=false spring.datasource.url=jdbc:sqlserver://toprak.database.windows.net:1433;database=KF;encrypt=true;trustServerCertificate=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30; spring.datasource.username=orhan123 spring.datasource.password=45orhann45! spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver # Hibernate ayarları spring.jpa.database-platform=org.hibernate.dialect.SQLServerDialect spring.jpa.hibernate.ddl-auto=update # SQL dosyaları varsa başlatma sırasında çalıştırılsın spring.sql.init.mode=always spring.sql.init.continue-on-error=true # Actuator health endpoint'i için (Docker healthcheck ile uyumlu hale getirmek için) management.endpoints.web.exposure.include=health management.endpoint.health.show-details=always package com.example.demo.entity; import jakarta.persistence.*; import lombok.Getter; import lombok.Setter; @Getter @Setter @Entity @Table(schema = "dbo", name = "URUN_BILGILERI") @IdClass(UrunBilgileriId.class) // Burayı ekledik public class UrunBilgileri { @Id @Column(name = "kredi_numarasi") private String krediNumarasi; @Id @Column(name = "sira") private Integer sira; @Column(name = "rehin_durum") private Integer rehinDurum; @Column(name = "product_line_id") private Integer productLineId; }
+# Aşama 1: Uygulamayı derlemek için bir build ortamı oluştur
+FROM openjdk:17-jdk-slim AS builder
+
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+WORKDIR /app
+
+
+# Maven Wrapper dosyalarını ve pom.xml'i kopyala
+# Bu, bağımlılıkların her derlemede yeniden indirilmesini engeller
+COPY .mvn .mvn
+COPY mvnw .
+COPY mvnw.cmd .
+COPY pom.xml .
+
+# mvnw betiğine çalıştırma izni ver
+RUN chmod +x mvnw
+
+# Bağımlılıkları indir (sadece pom.xml değiştiğinde yeniden çalışır)
+RUN ./mvnw dependency:go-offline -B
+
+# Projenin kalan kaynak kodunu kopyala
+COPY src src
+
+# Uygulamayı derle ve JAR dosyasını oluştur
+RUN ./mvnw clean package -DskipTests -Dproject.build.sourceEncoding=UTF-8 -Dfile.encoding=UTF-8
+
+# Aşama 2: Nihai çalışma imajını oluştur (daha küçük ve sadece JRE içerir)
+FROM openjdk:17-jdk-slim
+
+# Çalışma dizinini belirle
+WORKDIR /app
+
+# İlk aşamada oluşturulan JAR dosyasını kopyala
+COPY --from=builder /app/target/demo-0.0.1-SNAPSHOT.jar app.jar
+
+# Uygulama başladıktan sonra 8080 portunu dışarıya aç
+EXPOSE 8080
+
+# Uygulamayı başlatma komutu
+ENTRYPOINT ["java", "-jar", "app.jar"]
