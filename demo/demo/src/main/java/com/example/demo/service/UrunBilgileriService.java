@@ -35,8 +35,9 @@ public class UrunBilgileriService {
 
         if (existingUrunOptional.isPresent()) {
             UrunBilgileri existingUrun = existingUrunOptional.get();
+            // Yalnızca rehinDurum alanını güncelliyoruz
             existingUrun.setRehinDurum(urunBilgileri.getRehinDurum());
-            existingUrun.setProductLineId(urunBilgileri.getProductLineId());
+            // ProductLineId'yi güncelleme satırı kaldırıldı.
             return urunBilgileriRepository.save(existingUrun);
         }
         return null;
@@ -47,42 +48,38 @@ public class UrunBilgileriService {
         List<EgmStateInformation> existingRecords = egmStateInformationRepository.findByProductLineId(productLineId);
 
         if (existingRecords.isEmpty()) {
-            // Eğer kayıt yoksa, sadece ekleme yapabiliriz veya false dönebiliriz.
-            // Bu senaryoda "Hasar sorgu atlat" işlemi genellikle mevcut bir kaydı güncellemeyi/tekrarı içerir.
-            // Ancak, yeni bir product_line_id için de eklenebilir. Mevcut durumda false dönsün.
+            // Eğer kayıt yoksa, false dönebiliriz.
             return false;
         }
 
         // Mevcut kayıtları sil
         egmStateInformationRepository.deleteByProductLineId(productLineId);
 
-        // Yeni bir kayıt ekle - BELİRTİLEN SABİT DEĞERLERLE
+        // Yeni bir kayıt ekle
         EgmStateInformation newRecord = EgmStateInformation.builder()
                 .productLineId(productLineId)
-                .stateId(7)           // Belirtilen sabit değer
-                .stateStatus(1)       // Belirtilen sabit değer
-                .message("BAŞARILI")  // Belirtilen sabit değer
-                .levelInfo("INFO")    // Belirtilen sabit değer
-                .isDeleted(false)     // Belirtilen sabit değer (0 yerine false)
-                .processDate(LocalDateTime.now()) // MSSQL için GETDATE() veya SYSDATETIME() karşılığı
+                .stateId(7)
+                .stateStatus(1)
+                .message("BAŞARILI")
+                .levelInfo("INFO")
+                .isDeleted(false)
+                .processDate(LocalDateTime.now())
                 .build();
 
         egmStateInformationRepository.save(newRecord);
         return true;
     }
 
-    // YENİ METOT: Kredi numarası ve isteğe bağlı sıra numarasına göre işlem yapacak
     @Transactional
     public String deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(String krediNumarasi, Integer sira) {
         List<UrunBilgileri> urunler;
 
-        if (sira != null && sira != -1) { // -1 "Tümünü Seç" anlamına gelsin
-            // Belirli bir sıra numarasına göre filtrele
-            urunler = urunBilgileriRepository.findByIdKrediNumarasiAndIdSira(krediNumarasi, sira)
-                    .map(List::of) // Optional'ı List'e çevir
+        if (sira != null && sira != -1) {
+            urunler = urunBilgileriRepository.findByKrediNumarasiAndSira(krediNumarasi, sira)
+                    .map(List::of)
                     .orElse(Collections.emptyList());
         } else {
-            // Kredi numarasına ait tüm ürünleri getir ("Tümünü Seç" durumu)
+            // Kredi numarasına ait tüm ürünleri getir
             urunler = urunBilgileriRepository.findByKrediNumarasi(krediNumarasi);
         }
 
@@ -90,13 +87,11 @@ public class UrunBilgileriService {
             return "Kredi numarası: " + krediNumarasi + (sira != null ? " ve sıra: " + sira : "") + " ile eşleşen kayıt bulunamadı.";
         }
 
-        // Bulunan her bir product_line_id için işlemi tekrarla
         boolean allProcessed = true;
         for (UrunBilgileri urun : urunler) {
             boolean processed = processEgmStateInformationForProductLine(urun.getProductLineId());
             if (!processed) {
-                allProcessed = false; // Bir tanesi bile başarısız olursa genel durumu false yap
-                // İstersen burada daha detaylı hata loglayabilirsin
+                allProcessed = false;
             }
         }
 
@@ -107,13 +102,12 @@ public class UrunBilgileriService {
         }
     }
 
-    // Yeni metot: Frontend'e sıra numaralarını döndürmek için
     public List<Integer> getSiralarByKrediNumarasi(String krediNumarasi) {
         return urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)
                 .stream()
                 .map(UrunBilgileri::getSira)
-                .distinct() // Tekrar eden sıra numaralarını önle
-                .sorted() // Sıralı olsun
+                .distinct()
+                .sorted()
                 .collect(Collectors.toList());
     }
 }
