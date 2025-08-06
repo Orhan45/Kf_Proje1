@@ -30,4 +30,9 @@ public class KoOtoEvrakDurumService {
         }
         return null;
     }
+
+    // Yeni eklenen metot
+    public List<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediNumarasi(String krediNumarasi) {
+        return repository.findAllByKrediNumarasi(krediNumarasi);
+    }
 }

@@ -73,6 +73,16 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(list);
     }
 
+    @GetMapping("/kootoevrakdurum/kredi/{krediNumarasi}")
+    public ResponseEntity<List<KoOtoEvrakDurum>> getKoOtoEvrakDurumByKrediNumarasi(@PathVariable String krediNumarasi) {
+        List<KoOtoEvrakDurum> list = koOtoService.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
+        if (list == null || list.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(list);
+    }
+
+
     @PutMapping("/kootoevrakdurum/update/{krediNumarasi}/{evrakKodu}")
     public ResponseEntity<KoOtoEvrakDurum> updateKoOtoEvrakDurumByKrediAndEvrakKodu(
             @PathVariable String krediNumarasi,
