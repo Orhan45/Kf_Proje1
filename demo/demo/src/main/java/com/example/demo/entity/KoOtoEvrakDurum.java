@@ -24,5 +24,5 @@ public class KoOtoEvrakDurum {
     private String evrakKodu;
 
     @Column(name = "DURUM")
-    private Integer rehinDurum;
+    private Integer durum;
 }

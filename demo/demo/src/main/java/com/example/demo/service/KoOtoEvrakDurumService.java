@@ -25,7 +25,7 @@ public class KoOtoEvrakDurumService {
         Optional<KoOtoEvrakDurum> optionalEntity = repository.findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu);
         if (optionalEntity.isPresent()) {
             KoOtoEvrakDurum entity = optionalEntity.get();
-            entity.setRehinDurum(updateData.getRehinDurum());
+            entity.setDurum(updateData.getDurum());
             return repository.save(entity);
         }
         return null;
