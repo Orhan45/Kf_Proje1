@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/urunler")
@@ -82,6 +83,14 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(list);
     }
 
+    @GetMapping("/kootoevrakdurum/{krediNumarasi}/{evrakKodu}")
+    public ResponseEntity<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediAndEvrakKodu(
+            @PathVariable String krediNumarasi,
+            @PathVariable String evrakKodu) {
+        Optional<KoOtoEvrakDurum> optionalEvrak = koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu);
+        return optionalEvrak.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
     @PutMapping("/kootoevrakdurum/update/{krediNumarasi}/{evrakKodu}")
     public ResponseEntity<KoOtoEvrakDurum> updateKoOtoEvrakDurumByKrediAndEvrakKodu(

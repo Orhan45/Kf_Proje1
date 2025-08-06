@@ -35,4 +35,9 @@ public class KoOtoEvrakDurumService {
     public List<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediNumarasi(String krediNumarasi) {
         return repository.findAllByKrediNumarasi(krediNumarasi);
     }
+
+    // Java
+    public Optional<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediAndEvrakKodu(String krediNumarasi, String evrakKodu) {
+        return repository.findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu);
+    }
 }

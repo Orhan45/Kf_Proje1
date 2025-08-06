@@ -1,6 +1,9 @@
+// Java
 package com.example.demo.controller;
 
+import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.entity.UrunBilgileri;
+import com.example.demo.service.KoOtoEvrakDurumService;
 import com.example.demo.service.UrunBilgileriService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -16,6 +20,9 @@ class UrunBilgileriControllerTest {
 
     @Mock
     private UrunBilgileriService service;
+
+    @Mock
+    private KoOtoEvrakDurumService koOtoService;
 
     @InjectMocks
     private UrunBilgileriController controller;
@@ -133,5 +140,102 @@ class UrunBilgileriControllerTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody().contains("tamamlandı"));
         verify(service, times(1)).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", 1);
+    }
+
+    @Test
+    void getAllKoOtoEvrakDurum_whenEmpty_shouldReturnNotFound() {
+        when(koOtoService.findAll()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getAllKoOtoEvrakDurum();
+
+        assertEquals(404, response.getStatusCode().value());
+        assertFalse(response.hasBody());
+        verify(koOtoService, times(1)).findAll();
+    }
+
+    @Test
+    void getAllKoOtoEvrakDurum_whenFound_shouldReturnOk() {
+        KoOtoEvrakDurum evrak1 = new KoOtoEvrakDurum();
+        KoOtoEvrakDurum evrak2 = new KoOtoEvrakDurum();
+        when(koOtoService.findAll()).thenReturn(List.of(evrak1, evrak2));
+
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getAllKoOtoEvrakDurum();
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(2, response.getBody().size());
+        verify(koOtoService, times(1)).findAll();
+    }
+
+    @Test
+    void getKoOtoEvrakDurumByKrediNumarasi_whenEmpty_shouldReturnNotFound() {
+        when(koOtoService.getKoOtoEvrakDurumByKrediNumarasi("123")).thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi("123");
+
+        assertEquals(404, response.getStatusCode().value());
+        assertFalse(response.hasBody());
+        verify(koOtoService, times(1)).getKoOtoEvrakDurumByKrediNumarasi("123");
+    }
+
+    @Test
+    void getKoOtoEvrakDurumByKrediNumarasi_whenFound_shouldReturnOk() {
+        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
+        when(koOtoService.getKoOtoEvrakDurumByKrediNumarasi("123")).thenReturn(List.of(evrak));
+
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi("123");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+        verify(koOtoService, times(1)).getKoOtoEvrakDurumByKrediNumarasi("123");
+    }
+
+    @Test
+    void getKoOtoEvrakDurumByKrediAndEvrakKodu_whenNotFound_shouldReturnNotFound() {
+        when(koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1"))
+                .thenReturn(Optional.empty());
+
+        ResponseEntity<KoOtoEvrakDurum> response = controller.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
+
+        assertEquals(404, response.getStatusCode().value());
+        verify(koOtoService, times(1)).getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
+    }
+
+    @Test
+    void getKoOtoEvrakDurumByKrediAndEvrakKodu_whenFound_shouldReturnOk() {
+        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
+        when(koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1"))
+                .thenReturn(Optional.of(evrak));
+
+        ResponseEntity<KoOtoEvrakDurum> response = controller.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        verify(koOtoService, times(1)).getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
+    }
+
+    @Test
+    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_whenNotFound_shouldReturnNotFound() {
+        when(koOtoService.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class)))
+                .thenReturn(null);
+
+        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", new KoOtoEvrakDurum());
+
+        assertEquals(404, response.getStatusCode().value());
+        verify(koOtoService, times(1)).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class));
+    }
+
+    @Test
+    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_whenUpdated_shouldReturnOk() {
+        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
+        when(koOtoService.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class)))
+                .thenReturn(evrak);
+
+        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", new KoOtoEvrakDurum());
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        verify(koOtoService, times(1)).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class));
     }
 }
