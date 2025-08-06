@@ -6,11 +6,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.http.ResponseEntity;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -22,9 +20,11 @@ class UrunBilgileriControllerTest {
     @InjectMocks
     private UrunBilgileriController controller;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -46,7 +46,7 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi("123");
 
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
         assertFalse(response.hasBody());
         verify(service, times(1)).getUrunlerByKrediNumarasi("123");
     }
@@ -58,7 +58,7 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi("123");
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
         verify(service, times(1)).getUrunlerByKrediNumarasi("123");
@@ -70,7 +70,7 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi("123");
 
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
         assertFalse(response.hasBody());
         verify(service, times(1)).getSiralarByKrediNumarasi("123");
     }
@@ -81,7 +81,8 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi("123");
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertEquals(3, response.getBody().size());
         verify(service, times(1)).getSiralarByKrediNumarasi("123");
     }
@@ -93,7 +94,7 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri("123", 1, new UrunBilgileri());
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
         assertNotNull(response.getBody());
         verify(service, times(1)).updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class));
     }
@@ -104,7 +105,7 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri("123", 1, new UrunBilgileri());
 
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
         verify(service, times(1)).updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class));
     }
 
@@ -115,7 +116,8 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi("123", null);
 
-        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(404, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertTrue(response.getBody().contains("bulunamadı"));
         verify(service, times(1)).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", null);
     }
@@ -127,7 +129,8 @@ class UrunBilgileriControllerTest {
 
         ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi("123", 1);
 
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
         assertTrue(response.getBody().contains("tamamlandı"));
         verify(service, times(1)).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", 1);
     }

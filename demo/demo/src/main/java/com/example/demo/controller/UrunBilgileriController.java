@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.entity.UrunBilgileri;
+import com.example.demo.service.KoOtoEvrakDurumService;
 import com.example.demo.service.UrunBilgileriService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.List;
 public class UrunBilgileriController {
 
     private final UrunBilgileriService service;
+    private final KoOtoEvrakDurumService koOtoService;
 
     @GetMapping
     public List<UrunBilgileri> getProductionInformation() {
@@ -29,7 +32,6 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(urunler);
     }
 
-    // YENİ ENDPOINT: Kredi numarasına ait sıra numaralarını döndürür
     @GetMapping("/siralar/{krediNumarasi}")
     public ResponseEntity<List<Integer>> getSiralarByKrediNumarasi(@PathVariable String krediNumarasi) {
         List<Integer> siralar = service.getSiralarByKrediNumarasi(krediNumarasi);
@@ -38,7 +40,6 @@ public class UrunBilgileriController {
         }
         return ResponseEntity.ok(siralar);
     }
-
 
     @PutMapping("/{krediNumarasi}/{sira}")
     public ResponseEntity<UrunBilgileri> updateUrunBilgileri(
@@ -52,17 +53,35 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(updated);
     }
 
-    // GÜNCELLENMİŞ DELETE ENDPOINT: Kredi numarası ve isteğe bağlı sıra numarası ile işlem yapacak
-    // Not: @RequestParam kullanmak, sıra numarasının URL'de zorunlu olmamasını sağlar.
-    // Eğer sıra numarası verilmezse (null gelir), servis tüm sıra numaralarını işler.
     @DeleteMapping("/delete-and-reinsert-state-info-by-kredi")
     public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(
             @RequestParam String krediNumarasi,
-            @RequestParam(required = false) Integer sira) { // Sira opsiyonel
+            @RequestParam(required = false) Integer sira) {
         String responseMessage = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
-        if (responseMessage.contains("bulunamadı")) { // Servis mesajına göre hata kodu dönebiliriz
+        if (responseMessage.contains("bulunamadı")) {
             return ResponseEntity.status(404).body(responseMessage);
         }
         return ResponseEntity.ok(responseMessage);
+    }
+
+    @GetMapping("/kootoevrakdurum")
+    public ResponseEntity<List<KoOtoEvrakDurum>> getAllKoOtoEvrakDurum() {
+        List<KoOtoEvrakDurum> list = koOtoService.findAll();
+        if (list.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(list);
+    }
+
+    @PutMapping("/kootoevrakdurum/update/{krediNumarasi}/{evrakKodu}")
+    public ResponseEntity<KoOtoEvrakDurum> updateKoOtoEvrakDurumByKrediAndEvrakKodu(
+            @PathVariable String krediNumarasi,
+            @PathVariable("evrakKodu") String evrakKodu,
+            @RequestBody KoOtoEvrakDurum updateData) {
+        KoOtoEvrakDurum updated = koOtoService.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updated);
     }
 }
