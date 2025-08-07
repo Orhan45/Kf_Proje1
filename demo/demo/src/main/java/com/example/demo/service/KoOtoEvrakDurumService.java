@@ -20,7 +20,6 @@ public class KoOtoEvrakDurumService {
         repository.findAll().forEach(list::add);
         return list;
     }
-
     public KoOtoEvrakDurum updateKoOtoEvrakDurumByKrediAndEvrakKodu(String krediNumarasi, String evrakKodu, KoOtoEvrakDurum updateData) {
         Optional<KoOtoEvrakDurum> optionalEntity = repository.findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu);
         if (optionalEntity.isPresent()) {

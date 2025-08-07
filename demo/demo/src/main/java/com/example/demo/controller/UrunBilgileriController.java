@@ -7,6 +7,9 @@ import com.example.demo.service.UrunBilgileriService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.demo.service.KoGunKapamaService;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +21,8 @@ public class UrunBilgileriController {
 
     private final UrunBilgileriService service;
     private final KoOtoEvrakDurumService koOtoService;
+    private final KoGunKapamaService koGunKapamaService;
+
 
     @GetMapping
     public List<UrunBilgileri> getProductionInformation() {
@@ -103,4 +108,13 @@ public class UrunBilgileriController {
         }
         return ResponseEntity.ok(updated);
     }
+
+    @DeleteMapping("/kogunkapama/process/{date}")
+    public ResponseEntity<Void> processKoGunKapamaByDate(
+            @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        koGunKapamaService.processRecordsForDate(date);
+        return ResponseEntity.ok().build();
+    }
+
+
 }
