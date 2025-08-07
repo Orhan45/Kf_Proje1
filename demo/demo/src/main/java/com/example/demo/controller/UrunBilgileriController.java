@@ -116,5 +116,4 @@ public class UrunBilgileriController {
         return ResponseEntity.ok().build();
     }
 
-
 }

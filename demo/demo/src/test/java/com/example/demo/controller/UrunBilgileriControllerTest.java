@@ -1,18 +1,22 @@
-// Java
+// dil: java
 package com.example.demo.controller;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.entity.UrunBilgileri;
 import com.example.demo.service.KoOtoEvrakDurumService;
 import com.example.demo.service.UrunBilgileriService;
+import com.example.demo.service.KoGunKapamaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.http.ResponseEntity;
+
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -23,6 +27,9 @@ class UrunBilgileriControllerTest {
 
     @Mock
     private KoOtoEvrakDurumService koOtoService;
+
+    @Mock
+    private KoGunKapamaService koGunKapamaService;
 
     @InjectMocks
     private UrunBilgileriController controller;
@@ -237,5 +244,13 @@ class UrunBilgileriControllerTest {
         assertEquals(200, response.getStatusCode().value());
         assertNotNull(response.getBody());
         verify(koOtoService, times(1)).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class));
+    }
+
+    @Test
+    void processKoGunKapamaByDate_shouldCallServiceAndReturnOk() {
+        LocalDate date = LocalDate.of(2023, 10, 30);
+        ResponseEntity<Void> response = controller.processKoGunKapamaByDate(date);
+        verify(koGunKapamaService, times(1)).processRecordsForDate(date);
+        assertEquals(200, response.getStatusCode().value());
     }
 }
