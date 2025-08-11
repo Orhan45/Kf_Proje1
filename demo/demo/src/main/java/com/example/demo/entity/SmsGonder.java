@@ -3,7 +3,7 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 
@@ -24,7 +24,7 @@ public class SmsGonder {
     private String messageBody;
 
     @Column(name = "INSERT_DATE")
-    private LocalDateTime insertDate;
+    private LocalDate insertDate;
 
     @Column(name = "SMS_KOD")
     private String smsKod;

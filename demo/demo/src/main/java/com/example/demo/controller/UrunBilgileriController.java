@@ -1,4 +1,4 @@
-
+// dil: java
 package com.example.demo.controller;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,13 +117,12 @@ public class UrunBilgileriController {
         return ResponseEntity.ok().build();
     }
 
-    // Aşağıdaki endpoint SMS kayıtlarını sorgulamak için eklenmiştir.
+    // SMS kayıtlarını sorgulamak için endpoint.
     @GetMapping("/sms/records")
     public List<Object[]> getSmsRecords(
             @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
-        // SmsGonderService içerisindeki metodu çağırarak SMS kayıtlarını getirir.
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
     }
 }

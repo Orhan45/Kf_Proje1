@@ -3,8 +3,8 @@ package com.example.demo.service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +14,7 @@ public class SmsGonderService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<Object[]> getSmsRecordsByPhoneAndDate(String phoneNumber, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Object[]> getSmsRecordsByPhoneAndDate(String phoneNumber, LocalDate startDate, LocalDate endDate) {
         String baseQuery = buildUnionQuery();
         String filteredQuery = applyFilters(baseQuery, phoneNumber, startDate, endDate);
 
@@ -23,8 +23,8 @@ public class SmsGonderService {
             query.setParameter("phoneNumber", phoneNumber);
         }
         if (startDate != null && endDate != null) {
-            query.setParameter("startDate", Timestamp.valueOf(startDate));
-            query.setParameter("endDate", Timestamp.valueOf(endDate));
+            query.setParameter("startDate", Date.valueOf(startDate));
+            query.setParameter("endDate", Date.valueOf(endDate));
         }
         @SuppressWarnings("unchecked")
         List<Object[]> results = (List<Object[]>) query.getResultList();
@@ -41,7 +41,7 @@ public class SmsGonderService {
                 "SELECT PHONE_NUMBER, MESSAGE_BODY, INSERT_DATE, SMS_KOD, GONDERILEN_PROG, 'SMS_GONDER_ESKI' AS KAYNAK_TABLO FROM SMS_GONDER_ESKI";
     }
 
-    private String applyFilters(String unionQuery, String phoneNumber, LocalDateTime startDate, LocalDateTime endDate) {
+    private String applyFilters(String unionQuery, String phoneNumber, LocalDate startDate, LocalDate endDate) {
         StringBuilder sql = new StringBuilder("SELECT * FROM (")
                 .append(unionQuery)
                 .append(") t WHERE 1=1 ");
