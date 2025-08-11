@@ -3,10 +3,14 @@ package com.example.demo.service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.stereotype.Service;
+
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import org.springframework.stereotype.Service;
+import java.util.Map;
 
 @Service
 public class SmsGonderService {
@@ -14,21 +18,37 @@ public class SmsGonderService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<Object[]> getSmsRecordsByPhoneAndDate(String phoneNumber, LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, LocalDate startDate, LocalDate endDate) {
         String baseQuery = buildUnionQuery();
         String filteredQuery = applyFilters(baseQuery, phoneNumber, startDate, endDate);
 
         Query query = entityManager.createNativeQuery(filteredQuery);
+
         if (phoneNumber != null && !phoneNumber.isEmpty()) {
             query.setParameter("phoneNumber", phoneNumber);
         }
-        if (startDate != null && endDate != null) {
+        if (startDate != null) {
             query.setParameter("startDate", Date.valueOf(startDate));
+        }
+        if (endDate != null) {
             query.setParameter("endDate", Date.valueOf(endDate));
         }
+
         @SuppressWarnings("unchecked")
         List<Object[]> results = (List<Object[]>) query.getResultList();
-        return results;
+
+        List<Map<String, Object>> dtoList = new ArrayList<>();
+        for (Object[] row : results) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("phoneNumber", row[0]);
+            map.put("messageBody", row[1]);
+            map.put("insertDate", row[2]);
+            map.put("smsKod", row[3]);
+            map.put("gonderilenProg", row[4]);
+            map.put("kaynakTablo", row[5]);
+            dtoList.add(map);
+        }
+        return dtoList;
     }
 
     private String buildUnionQuery() {
@@ -51,6 +71,10 @@ public class SmsGonderService {
         }
         if (startDate != null && endDate != null) {
             sql.append("AND INSERT_DATE BETWEEN :startDate AND :endDate ");
+        } else if (startDate != null) {
+            sql.append("AND INSERT_DATE >= :startDate ");
+        } else if (endDate != null) {
+            sql.append("AND INSERT_DATE <= :endDate ");
         }
         sql.append("ORDER BY INSERT_DATE DESC");
         return sql.toString();

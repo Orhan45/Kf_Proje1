@@ -1,4 +1,3 @@
-// dil: java
 package com.example.demo.service;
 
 import jakarta.persistence.EntityManager;
@@ -10,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -49,12 +49,12 @@ class SmsGonderServiceTest {
         when(query.getResultList()).thenReturn(mockResults);
 
         // Act
-        List<Object[]> result = smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
+        List<Map<String, Object>> result = smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
 
         // Assert
         assertEquals(2, result.size());
-        assertEquals("Mesaj 1", result.get(0)[1]);
-        assertEquals("SMS_GONDER", result.get(0)[5]);
+        assertEquals("Mesaj 1", result.get(0).get("messageBody"));
+        assertEquals("SMS_GONDER", result.get(0).get("kaynakTablo"));
     }
 
     @Test
@@ -64,7 +64,7 @@ class SmsGonderServiceTest {
         when(query.getResultList()).thenReturn(List.of());
 
         // Act
-        List<Object[]> result = smsGonderService.getSmsRecordsByPhoneAndDate(null, null, null);
+        List<Map<String, Object>> result = smsGonderService.getSmsRecordsByPhoneAndDate(null, null, null);
 
         // Assert
         assertNotNull(result);

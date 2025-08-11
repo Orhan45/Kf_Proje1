@@ -1,4 +1,3 @@
-// dil: java
 package com.example.demo.controller;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
@@ -14,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/urunler")
@@ -117,9 +117,9 @@ public class UrunBilgileriController {
         return ResponseEntity.ok().build();
     }
 
-    // SMS kayıtlarını sorgulamak için endpoint.
+    // dil: java
     @GetMapping("/sms/records")
-    public List<Object[]> getSmsRecords(
+    public List<Map<String, Object>> getSmsRecords(
             @RequestParam(required = false) String phoneNumber,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
