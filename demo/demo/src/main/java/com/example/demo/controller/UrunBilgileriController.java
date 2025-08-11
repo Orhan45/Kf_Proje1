@@ -1,16 +1,18 @@
+
 package com.example.demo.controller;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.entity.UrunBilgileri;
 import com.example.demo.service.KoOtoEvrakDurumService;
 import com.example.demo.service.UrunBilgileriService;
+import com.example.demo.service.KoGunKapamaService;
+import com.example.demo.service.SmsGonderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.demo.service.KoGunKapamaService;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,7 +24,7 @@ public class UrunBilgileriController {
     private final UrunBilgileriService service;
     private final KoOtoEvrakDurumService koOtoService;
     private final KoGunKapamaService koGunKapamaService;
-
+    private final SmsGonderService smsGonderService;
 
     @GetMapping
     public List<UrunBilgileri> getProductionInformation() {
@@ -116,4 +118,13 @@ public class UrunBilgileriController {
         return ResponseEntity.ok().build();
     }
 
+    // Aşağıdaki endpoint SMS kayıtlarını sorgulamak için eklenmiştir.
+    @GetMapping("/sms/records")
+    public List<Object[]> getSmsRecords(
+            @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+        // SmsGonderService içerisindeki metodu çağırarak SMS kayıtlarını getirir.
+        return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
+    }
 }
