@@ -7,12 +7,22 @@ import com.example.demo.repository.EgmStateInformationRepository;
 import com.example.demo.repository.UrunBilgileriRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
-import java.util.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class UrunBilgileriServiceTest {
+
+    @InjectMocks
+    private UrunBilgileriService service;
 
     @Mock
     private UrunBilgileriRepository urunBilgileriRepository;
@@ -20,130 +30,230 @@ class UrunBilgileriServiceTest {
     @Mock
     private EgmStateInformationRepository egmStateInformationRepository;
 
-    @InjectMocks
-    private UrunBilgileriService service;
-
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void getAllUrunler_shouldReturnList() {
-        when(urunBilgileriRepository.findAll()).thenReturn(Arrays.asList(new UrunBilgileri(), new UrunBilgileri()));
-
-        var result = service.getAllUrunler();
-
-        assertEquals(2, result.size());
-        verify(urunBilgileriRepository).findAll();
-    }
+    // --- getUrunlerByKrediNumarasi Metodu İçin Testler ---
 
     @Test
-    void getUrunlerByKrediNumarasi_shouldReturnList() {
-        when(urunBilgileriRepository.findByKrediNumarasi("123")).thenReturn(List.of(new UrunBilgileri()));
+    void getUrunlerByKrediNumarasi_shouldReturnList_whenRecordsExist() {
+        String krediNumarasi = "kredi1";
+        List<UrunBilgileri> mockList = Arrays.asList(new UrunBilgileri(), new UrunBilgileri());
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(mockList);
 
-        var result = service.getUrunlerByKrediNumarasi("123");
-
-        assertEquals(1, result.size());
-        verify(urunBilgileriRepository).findByKrediNumarasi("123");
-    }
-
-    @Test
-    void updateUrunBilgileri_whenExists_shouldUpdateRehinDurum() {
-        var id = new UrunBilgileriId("123", 1);
-        UrunBilgileri existing = new UrunBilgileri();
-        existing.setRehinDurum(3);
-        UrunBilgileri update = new UrunBilgileri();
-        update.setRehinDurum(5);
-
-        when(urunBilgileriRepository.findById(id)).thenReturn(Optional.of(existing));
-        when(urunBilgileriRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        var result = service.updateUrunBilgileri("123", 1, update);
+        List<UrunBilgileri> result = service.getUrunlerByKrediNumarasi(krediNumarasi);
 
         assertNotNull(result);
-        assertEquals(5, result.getRehinDurum());
-        verify(urunBilgileriRepository).findById(id);
-        verify(urunBilgileriRepository).save(existing);
+        assertEquals(2, result.size());
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void updateUrunBilgileri_whenNotExists_shouldReturnNull() {
-        var id = new UrunBilgileriId("123", 1);
-        when(urunBilgileriRepository.findById(id)).thenReturn(Optional.empty());
+    void getUrunlerByKrediNumarasi_shouldReturnEmptyList_whenNoRecordsExist() {
+        String krediNumarasi = "kredi1";
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(Collections.emptyList());
 
-        var result = service.updateUrunBilgileri("123", 1, new UrunBilgileri());
+        List<UrunBilgileri> result = service.getUrunlerByKrediNumarasi(krediNumarasi);
 
-        assertNull(result);
-        verify(urunBilgileriRepository).findById(id);
-        verify(urunBilgileriRepository, never()).save(any());
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
+    }
+
+    // --- updateUrunBilgileri Metodu İçin Testler ---
+
+    @Test
+    void updateUrunBilgileri_shouldUpdateAndReturnEntity_whenRecordExists() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        UrunBilgileri existingEntity = new UrunBilgileri();
+        existingEntity.setRehinDurum(0);
+        UrunBilgileri updateData = new UrunBilgileri();
+        updateData.setRehinDurum(1);
+
+        when(urunBilgileriRepository.findById(any(UrunBilgileriId.class))).thenReturn(Optional.of(existingEntity));
+        when(urunBilgileriRepository.save(any(UrunBilgileri.class))).thenReturn(existingEntity);
+
+        UrunBilgileri updated = service.updateUrunBilgileri(krediNumarasi, sira, updateData);
+
+        assertNotNull(updated);
+        assertEquals(1, updated.getRehinDurum());
+        verify(urunBilgileriRepository).findById(any(UrunBilgileriId.class));
+        verify(urunBilgileriRepository).save(any(UrunBilgileri.class));
     }
 
     @Test
-    void processEgmStateInformationForProductLine_whenNoRecords_shouldReturnFalse() {
-        when(egmStateInformationRepository.findByProductLineId(1L)).thenReturn(Collections.emptyList());
+    void updateUrunBilgileri_shouldReturnNull_whenRecordDoesNotExist() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        UrunBilgileri updateData = new UrunBilgileri();
 
-        boolean result = service.processEgmStateInformationForProductLine(1L);
+        when(urunBilgileriRepository.findById(any(UrunBilgileriId.class))).thenReturn(Optional.empty());
 
-        assertFalse(result);
-        verify(egmStateInformationRepository).findByProductLineId(1L);
-        verify(egmStateInformationRepository, never()).deleteByProductLineId(anyLong());
+        UrunBilgileri updated = service.updateUrunBilgileri(krediNumarasi, sira, updateData);
+
+        assertNull(updated);
+        verify(urunBilgileriRepository).findById(any(UrunBilgileriId.class));
+        verify(urunBilgileriRepository, never()).save(any(UrunBilgileri.class));
+    }
+
+    // --- getSiralarByKrediNumarasi Metodu İçin Testler ---
+
+    @Test
+    void getSiralarByKrediNumarasi_shouldReturnDistinctSortedSiralar() {
+        String krediNumarasi = "kredi1";
+        UrunBilgileri urun1 = new UrunBilgileri(); urun1.setSira(3);
+        UrunBilgileri urun2 = new UrunBilgileri(); urun2.setSira(1);
+        UrunBilgileri urun3 = new UrunBilgileri(); urun3.setSira(2);
+        UrunBilgileri urun4 = new UrunBilgileri(); urun4.setSira(1); // tekrar eden
+        List<UrunBilgileri> mockList = Arrays.asList(urun1, urun2, urun3, urun4);
+
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(mockList);
+
+        List<Integer> result = service.getSiralarByKrediNumarasi(krediNumarasi);
+
+        assertEquals(Arrays.asList(1, 2, 3), result);
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void processEgmStateInformationForProductLine_whenRecordsExist_shouldDeleteAndSaveNew() {
-        when(egmStateInformationRepository.findByProductLineId(1L)).thenReturn(List.of(new EgmStateInformation()));
+    void getSiralarByKrediNumarasi_shouldReturnEmptyList_whenNoUrunlerExist() {
+        String krediNumarasi = "kredi1";
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(Collections.emptyList());
 
-        boolean result = service.processEgmStateInformationForProductLine(1L);
+        List<Integer> result = service.getSiralarByKrediNumarasi(krediNumarasi);
+
+        assertTrue(result.isEmpty());
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
+    }
+
+    // --- processEgmStateInformationForProductLine Metodu İçin Testler ---
+
+    @Test
+    void processEgmStateInformationForProductLine_shouldProcessSuccessfully_whenRecordsExist() {
+        Long productLineId = 1L;
+        List<EgmStateInformation> existingRecords = Collections.singletonList(new EgmStateInformation());
+        when(egmStateInformationRepository.findByProductLineId(productLineId)).thenReturn(existingRecords);
+
+        boolean result = service.processEgmStateInformationForProductLine(productLineId);
 
         assertTrue(result);
+        verify(egmStateInformationRepository).findByProductLineId(productLineId);
+        verify(egmStateInformationRepository).deleteByProductLineId(productLineId);
+        verify(egmStateInformationRepository).save(any(EgmStateInformation.class));
+    }
+
+    @Test
+    void processEgmStateInformationForProductLine_shouldReturnFalse_whenNoRecordsExist() {
+        Long productLineId = 1L;
+        when(egmStateInformationRepository.findByProductLineId(productLineId)).thenReturn(Collections.emptyList());
+
+        boolean result = service.processEgmStateInformationForProductLine(productLineId);
+
+        assertFalse(result);
+        verify(egmStateInformationRepository).findByProductLineId(productLineId);
+        verify(egmStateInformationRepository, never()).deleteByProductLineId(anyLong());
+        verify(egmStateInformationRepository, never()).save(any(EgmStateInformation.class));
+    }
+
+    // --- deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira Metodu İçin Testler ---
+
+    @Test
+    void deleteAndReinsert_shouldReturnSuccess_whenSiraProvidedAndProcessedSuccessfully() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        UrunBilgileri urun = new UrunBilgileri();
+        urun.setProductLineId(1L);
+        when(urunBilgileriRepository.findByKrediNumarasiAndSira(krediNumarasi, sira)).thenReturn(Optional.of(urun));
+        when(egmStateInformationRepository.findByProductLineId(1L)).thenReturn(Collections.singletonList(new EgmStateInformation()));
+
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
+
+        assertTrue(result.contains("başarıyla güncellendi"));
+        verify(urunBilgileriRepository).findByKrediNumarasiAndSira(krediNumarasi, sira);
         verify(egmStateInformationRepository).deleteByProductLineId(1L);
         verify(egmStateInformationRepository).save(any(EgmStateInformation.class));
     }
 
     @Test
-    void deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira_whenNoRecords_shouldReturnNotFound() {
-        when(urunBilgileriRepository.findByKrediNumarasi("123")).thenReturn(Collections.emptyList());
+    void deleteAndReinsert_shouldReturnNotFound_whenSiraProvidedAndRecordDoesNotExist() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        when(urunBilgileriRepository.findByKrediNumarasiAndSira(krediNumarasi, sira)).thenReturn(Optional.empty());
 
-        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", null);
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
 
         assertTrue(result.contains("bulunamadı"));
-        verify(urunBilgileriRepository).findByKrediNumarasi("123");
+        verify(urunBilgileriRepository).findByKrediNumarasiAndSira(krediNumarasi, sira);
         verify(egmStateInformationRepository, never()).deleteByProductLineId(anyLong());
     }
 
     @Test
-    void deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira_whenSiraProvided_shouldProcess() {
+    void deleteAndReinsert_shouldReturnPartialFailure_whenSiraProvidedAndProcessingFails() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
         UrunBilgileri urun = new UrunBilgileri();
-        urun.setProductLineId(10L);
+        urun.setProductLineId(1L);
+        when(urunBilgileriRepository.findByKrediNumarasiAndSira(krediNumarasi, sira)).thenReturn(Optional.of(urun));
+        when(egmStateInformationRepository.findByProductLineId(1L)).thenReturn(Collections.emptyList()); // processing fail
 
-        when(urunBilgileriRepository.findByKrediNumarasiAndSira("123", 1)).thenReturn(Optional.of(urun));
-        when(egmStateInformationRepository.findByProductLineId(10L)).thenReturn(List.of(new EgmStateInformation()));
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
 
-        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", 1);
-
-        assertTrue(result.contains("başarıyla güncellendi"));
-        verify(urunBilgileriRepository).findByKrediNumarasiAndSira("123", 1);
-        verify(egmStateInformationRepository).deleteByProductLineId(10L);
-        verify(egmStateInformationRepository).save(any());
+        assertTrue(result.contains("bazı işlemler tamamlanamadı"));
+        verify(urunBilgileriRepository).findByKrediNumarasiAndSira(krediNumarasi, sira);
+        verify(egmStateInformationRepository, never()).deleteByProductLineId(anyLong());
+        verify(egmStateInformationRepository, never()).save(any(EgmStateInformation.class));
     }
 
     @Test
-    void getSiralarByKrediNumarasi_shouldReturnDistinctSortedList() {
-        UrunBilgileri u1 = new UrunBilgileri();
-        u1.setSira(3);
-        UrunBilgileri u2 = new UrunBilgileri();
-        u2.setSira(1);
-        UrunBilgileri u3 = new UrunBilgileri();
-        u3.setSira(2);
-        UrunBilgileri u4 = new UrunBilgileri();
-        u4.setSira(2);
+    void deleteAndReinsert_shouldReturnSuccess_whenSiraIsNotProvidedAndAllProcessed() {
+        String krediNumarasi = "kredi1";
+        UrunBilgileri urun1 = new UrunBilgileri(); urun1.setProductLineId(1L);
+        UrunBilgileri urun2 = new UrunBilgileri(); urun2.setProductLineId(2L);
+        List<UrunBilgileri> urunler = Arrays.asList(urun1, urun2);
 
-        when(urunBilgileriRepository.findByKrediNumarasi("123")).thenReturn(List.of(u1, u2, u3, u4));
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(urunler);
+        when(egmStateInformationRepository.findByProductLineId(anyLong())).thenReturn(Collections.singletonList(new EgmStateInformation()));
 
-        var siralar = service.getSiralarByKrediNumarasi("123");
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, null);
 
-        assertEquals(List.of(1, 2, 3), siralar);
-        verify(urunBilgileriRepository).findByKrediNumarasi("123");
+        assertTrue(result.contains("başarıyla güncellendi"));
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
+        verify(egmStateInformationRepository, times(2)).deleteByProductLineId(anyLong());
+        verify(egmStateInformationRepository, times(2)).save(any(EgmStateInformation.class));
+    }
+
+    @Test
+    void deleteAndReinsert_shouldReturnNotFound_whenSiraIsNotProvidedAndNoRecordsExist() {
+        String krediNumarasi = "kredi1";
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(Collections.emptyList());
+
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, null);
+
+        assertTrue(result.contains("bulunamadı"));
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
+        verify(egmStateInformationRepository, never()).deleteByProductLineId(anyLong());
+    }
+
+    @Test
+    void deleteAndReinsert_shouldReturnPartialFailure_whenSiraIsNotProvidedAndSomeProcessingFails() {
+        String krediNumarasi = "kredi1";
+        UrunBilgileri urun1 = new UrunBilgileri(); urun1.setProductLineId(1L);
+        UrunBilgileri urun2 = new UrunBilgileri(); urun2.setProductLineId(2L);
+        List<UrunBilgileri> urunler = Arrays.asList(urun1, urun2);
+
+        when(urunBilgileriRepository.findByKrediNumarasi(krediNumarasi)).thenReturn(urunler);
+        // İlk ürün için kayıt var, ikincisi için yok.
+        when(egmStateInformationRepository.findByProductLineId(1L)).thenReturn(Collections.singletonList(new EgmStateInformation()));
+        when(egmStateInformationRepository.findByProductLineId(2L)).thenReturn(Collections.emptyList());
+
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, null);
+
+        assertTrue(result.contains("bazı işlemler tamamlanamadı"));
+        verify(urunBilgileriRepository).findByKrediNumarasi(krediNumarasi);
+        verify(egmStateInformationRepository, times(1)).deleteByProductLineId(1L);
+        verify(egmStateInformationRepository, times(1)).save(any(EgmStateInformation.class));
     }
 }

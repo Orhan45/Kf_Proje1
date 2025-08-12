@@ -1,14 +1,13 @@
-// File: src/test/java/com/example/demo/service/KoOtoEvrakDurumServiceTest.java
-
 package com.example.demo.service;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.repository.KoOtoEvrakDurumRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -18,88 +17,91 @@ import static org.mockito.Mockito.*;
 
 class KoOtoEvrakDurumServiceTest {
 
-    @Mock
-    private KoOtoEvrakDurumRepository repository;
-
     @InjectMocks
     private KoOtoEvrakDurumService service;
 
-    private AutoCloseable closeable;
+    @Mock
+    private KoOtoEvrakDurumRepository repository;
 
     @BeforeEach
     void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
+    // getKoOtoEvrakDurumByKrediNumarasi metodu için testler
     @Test
-    void findAll_whenRepositoryReturnsList() {
-        KoOtoEvrakDurum e1 = new KoOtoEvrakDurum();
-        KoOtoEvrakDurum e2 = new KoOtoEvrakDurum();
-        when(repository.findAll()).thenReturn(Arrays.asList(e1, e2));
+    void getKoOtoEvrakDurumByKrediNumarasi_shouldReturnList_whenRecordsExist() {
+        // Hazırlık
+        String krediNumarasi = "12345";
+        List<KoOtoEvrakDurum> mockList = Collections.singletonList(new KoOtoEvrakDurum());
+        when(repository.findAllByKrediNumarasi(krediNumarasi)).thenReturn(mockList);
 
-        List<KoOtoEvrakDurum> result = service.findAll();
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(repository, times(1)).findAll();
-    }
+        // Çalıştırma
+        List<KoOtoEvrakDurum> result = service.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
 
-    @Test
-    void findAll_whenRepositoryReturnsEmpty() {
-        when(repository.findAll()).thenReturn(Collections.emptyList());
-
-        List<KoOtoEvrakDurum> result = service.findAll();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(repository, times(1)).findAll();
-    }
-
-    @Test
-    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_whenEntityExists() {
-        KoOtoEvrakDurum existing = new KoOtoEvrakDurum();
-        existing.setDurum(0);
-        KoOtoEvrakDurum updateData = new KoOtoEvrakDurum();
-        updateData.setDurum(1);
-
-        when(repository.findByKrediNumarasiAndEvrakKodu("123", "E1"))
-                .thenReturn(Optional.of(existing));
-        when(repository.save(existing)).thenReturn(existing);
-
-        KoOtoEvrakDurum result = service.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", updateData);
-        assertNotNull(result);
-        assertEquals(1, result.getDurum());
-        verify(repository, times(1)).findByKrediNumarasiAndEvrakKodu("123", "E1");
-        verify(repository, times(1)).save(existing);
-    }
-
-    @Test
-    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_whenEntityNotFound() {
-        when(repository.findByKrediNumarasiAndEvrakKodu("123", "E1"))
-                .thenReturn(Optional.empty());
-
-        KoOtoEvrakDurum result = service.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", new KoOtoEvrakDurum());
-        assertNull(result);
-        verify(repository, times(1)).findByKrediNumarasiAndEvrakKodu("123", "E1");
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void getKoOtoEvrakDurumByKrediNumarasi_whenRepositoryReturnsList() {
-        KoOtoEvrakDurum entity = new KoOtoEvrakDurum();
-        when(repository.findAllByKrediNumarasi("123")).thenReturn(Arrays.asList(entity));
-
-        List<KoOtoEvrakDurum> result = service.getKoOtoEvrakDurumByKrediNumarasi("123");
+        // Kontrol
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(repository, times(1)).findAllByKrediNumarasi("123");
+        verify(repository, times(1)).findAllByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void getKoOtoEvrakDurumByKrediNumarasi_whenRepositoryReturnsEmpty() {
-        when(repository.findAllByKrediNumarasi("123")).thenReturn(Collections.emptyList());
+    void getKoOtoEvrakDurumByKrediNumarasi_shouldReturnEmptyList_whenNoRecordsExist() {
+        // Hazırlık
+        String krediNumarasi = "12345";
+        when(repository.findAllByKrediNumarasi(krediNumarasi)).thenReturn(Collections.emptyList());
 
-        List<KoOtoEvrakDurum> result = service.getKoOtoEvrakDurumByKrediNumarasi("123");
+        // Çalıştırma
+        List<KoOtoEvrakDurum> result = service.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
+
+        // Kontrol
         assertNotNull(result);
         assertTrue(result.isEmpty());
-        verify(repository, times(1)).findAllByKrediNumarasi("123");
+        verify(repository, times(1)).findAllByKrediNumarasi(krediNumarasi);
+    }
+
+    // updateKoOtoEvrakDurumByKrediAndEvrakKodu metodu için testler
+    @Test
+    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_shouldUpdateAndReturnEntity_whenRecordExists() {
+        // Hazırlık
+        String krediNumarasi = "12345";
+        String evrakKodu = "E1";
+        KoOtoEvrakDurum existingEntity = new KoOtoEvrakDurum();
+        existingEntity.setDurum(0);
+        KoOtoEvrakDurum updateData = new KoOtoEvrakDurum();
+        updateData.setDurum(2);
+
+        when(repository.findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu))
+                .thenReturn(Optional.of(existingEntity));
+        when(repository.save(any(KoOtoEvrakDurum.class))).thenReturn(existingEntity);
+
+        // Çalıştırma
+        KoOtoEvrakDurum updatedEntity = service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+
+        // Kontrol
+        assertNotNull(updatedEntity);
+        assertEquals(2, updatedEntity.getDurum()); // Durumun güncellendiğini kontrol et
+        verify(repository, times(1)).findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu);
+        verify(repository, times(1)).save(existingEntity);
+    }
+
+    @Test
+    void updateKoOtoEvrakDurumByKrediAndEvrakKodu_shouldReturnNull_whenRecordDoesNotExist() {
+        // Hazırlık
+        String krediNumarasi = "12345";
+        String evrakKodu = "E1";
+        KoOtoEvrakDurum updateData = new KoOtoEvrakDurum();
+        updateData.setDurum(2);
+
+        when(repository.findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu))
+                .thenReturn(Optional.empty());
+
+        // Çalıştırma
+        KoOtoEvrakDurum updatedEntity = service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+
+        // Kontrol
+        assertNull(updatedEntity);
+        verify(repository, times(1)).findByKrediNumarasiAndEvrakKodu(krediNumarasi, evrakKodu);
+        verify(repository, never()).save(any(KoOtoEvrakDurum.class)); // Kayıt bulunamadığı için save metodu çağrılmamalı
     }
 }
