@@ -1,4 +1,3 @@
-
 package com.example.demo.controller;
 
 import com.example.demo.service.KoGunKapamaService;
@@ -14,12 +13,12 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class KoGunKapamaController {
 
-    private final KoGunKapamaService service;
+    private final KoGunKapamaService koGunKapamaService;
 
     @DeleteMapping("/process/{date}")
     public ResponseEntity<Void> processKoGunKapamaByDate(
             @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        service.processRecordsForDate(date);
+        koGunKapamaService.processRecordsForDate(date);
         return ResponseEntity.ok().build();
     }
 }

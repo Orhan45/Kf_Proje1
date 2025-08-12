@@ -14,11 +14,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class KoOtoEvrakDurumController {
 
-    private final KoOtoEvrakDurumService service;
+    private final KoOtoEvrakDurumService koOtoService;
 
     @GetMapping
     public ResponseEntity<List<KoOtoEvrakDurum>> getAllKoOtoEvrakDurum() {
-        List<KoOtoEvrakDurum> list = service.findAll();
+        List<KoOtoEvrakDurum> list = koOtoService.findAll();
         if (list.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -27,7 +27,7 @@ public class KoOtoEvrakDurumController {
 
     @GetMapping("/kredi/{krediNumarasi}")
     public ResponseEntity<List<KoOtoEvrakDurum>> getKoOtoEvrakDurumByKrediNumarasi(@PathVariable String krediNumarasi) {
-        List<KoOtoEvrakDurum> list = service.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
+        List<KoOtoEvrakDurum> list = koOtoService.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
         if (list == null || list.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -38,7 +38,7 @@ public class KoOtoEvrakDurumController {
     public ResponseEntity<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediAndEvrakKodu(
             @PathVariable String krediNumarasi,
             @PathVariable String evrakKodu) {
-        Optional<KoOtoEvrakDurum> optionalEvrak = service.getKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu);
+        Optional<KoOtoEvrakDurum> optionalEvrak = koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu);
         return optionalEvrak.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -46,9 +46,9 @@ public class KoOtoEvrakDurumController {
     @PutMapping("/update/{krediNumarasi}/{evrakKodu}")
     public ResponseEntity<KoOtoEvrakDurum> updateKoOtoEvrakDurumByKrediAndEvrakKodu(
             @PathVariable String krediNumarasi,
-            @PathVariable String evrakKodu,
+            @PathVariable("evrakKodu") String evrakKodu,
             @RequestBody KoOtoEvrakDurum updateData) {
-        KoOtoEvrakDurum updated = service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+        KoOtoEvrakDurum updated = koOtoService.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
         if (updated == null) {
             return ResponseEntity.notFound().build();
         }

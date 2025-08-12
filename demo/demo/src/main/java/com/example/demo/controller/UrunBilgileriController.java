@@ -1,5 +1,3 @@
-// dil: java
-// Dosya: `demo/src/main/java/com/example/demo/controller/UrunBilgileriController.java`
 package com.example.demo.controller;
 
 import com.example.demo.entity.UrunBilgileri;
@@ -52,15 +50,14 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(updated);
     }
 
-    // Yeni eklenen metot
-    @DeleteMapping("/egm/{krediNumarasi}")
+    @DeleteMapping("/delete-and-reinsert-state-info-by-kredi")
     public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(
-            @PathVariable String krediNumarasi,
+            @RequestParam String krediNumarasi,
             @RequestParam(required = false) Integer sira) {
-        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
-        if (result.contains("bulunamadı")) {
-            return ResponseEntity.status(404).body(result);
+        String responseMessage = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
+        if (responseMessage.contains("bulunamadı")) {
+            return ResponseEntity.status(404).body(responseMessage);
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(responseMessage);
     }
 }

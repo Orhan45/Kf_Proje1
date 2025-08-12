@@ -1,4 +1,3 @@
-
 package com.example.demo.controller;
 
 import com.example.demo.service.SmsGonderService;
@@ -15,13 +14,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SmsGonderController {
 
-    private final SmsGonderService service;
+    private final SmsGonderService smsGonderService;
 
     @GetMapping("/records")
     public List<Map<String, Object>> getSmsRecords(
             @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return service.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
+        return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
     }
 }
