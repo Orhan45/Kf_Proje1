@@ -1,19 +1,14 @@
+// dil: java
+// Dosya: `demo/src/main/java/com/example/demo/controller/UrunBilgileriController.java`
 package com.example.demo.controller;
 
-import com.example.demo.entity.KoOtoEvrakDurum;
 import com.example.demo.entity.UrunBilgileri;
-import com.example.demo.service.KoOtoEvrakDurumService;
 import com.example.demo.service.UrunBilgileriService;
-import com.example.demo.service.KoGunKapamaService;
-import com.example.demo.service.SmsGonderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.format.annotation.DateTimeFormat;
-import java.time.LocalDate;
+
 import java.util.List;
-import java.util.Optional;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/urunler")
@@ -21,9 +16,6 @@ import java.util.Map;
 public class UrunBilgileriController {
 
     private final UrunBilgileriService service;
-    private final KoOtoEvrakDurumService koOtoService;
-    private final KoGunKapamaService koGunKapamaService;
-    private final SmsGonderService smsGonderService;
 
     @GetMapping
     public List<UrunBilgileri> getProductionInformation() {
@@ -60,69 +52,15 @@ public class UrunBilgileriController {
         return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/delete-and-reinsert-state-info-by-kredi")
+    // Yeni eklenen metot
+    @DeleteMapping("/egm/{krediNumarasi}")
     public ResponseEntity<String> deleteAndReinsertEgmStateInformationByKrediNumarasi(
-            @RequestParam String krediNumarasi,
+            @PathVariable String krediNumarasi,
             @RequestParam(required = false) Integer sira) {
-        String responseMessage = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
-        if (responseMessage.contains("bulunamadı")) {
-            return ResponseEntity.status(404).body(responseMessage);
+        String result = service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(krediNumarasi, sira);
+        if (result.contains("bulunamadı")) {
+            return ResponseEntity.status(404).body(result);
         }
-        return ResponseEntity.ok(responseMessage);
-    }
-
-    @GetMapping("/kootoevrakdurum")
-    public ResponseEntity<List<KoOtoEvrakDurum>> getAllKoOtoEvrakDurum() {
-        List<KoOtoEvrakDurum> list = koOtoService.findAll();
-        if (list.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(list);
-    }
-
-    @GetMapping("/kootoevrakdurum/kredi/{krediNumarasi}")
-    public ResponseEntity<List<KoOtoEvrakDurum>> getKoOtoEvrakDurumByKrediNumarasi(@PathVariable String krediNumarasi) {
-        List<KoOtoEvrakDurum> list = koOtoService.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
-        if (list == null || list.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(list);
-    }
-
-    @GetMapping("/kootoevrakdurum/{krediNumarasi}/{evrakKodu}")
-    public ResponseEntity<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediAndEvrakKodu(
-            @PathVariable String krediNumarasi,
-            @PathVariable String evrakKodu) {
-        Optional<KoOtoEvrakDurum> optionalEvrak = koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu);
-        return optionalEvrak.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/kootoevrakdurum/update/{krediNumarasi}/{evrakKodu}")
-    public ResponseEntity<KoOtoEvrakDurum> updateKoOtoEvrakDurumByKrediAndEvrakKodu(
-            @PathVariable String krediNumarasi,
-            @PathVariable("evrakKodu") String evrakKodu,
-            @RequestBody KoOtoEvrakDurum updateData) {
-        KoOtoEvrakDurum updated = koOtoService.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
-        if (updated == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updated);
-    }
-
-    @DeleteMapping("/kogunkapama/process/{date}")
-    public ResponseEntity<Void> processKoGunKapamaByDate(
-            @PathVariable("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        koGunKapamaService.processRecordsForDate(date);
-        return ResponseEntity.ok().build();
-    }
-
-    // dil: java
-    @GetMapping("/sms/records")
-    public List<Map<String, Object>> getSmsRecords(
-            @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
+        return ResponseEntity.ok(result);
     }
 }
