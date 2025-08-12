@@ -15,11 +15,6 @@ public class UrunBilgileriController {
 
     private final UrunBilgileriService service;
 
-    @GetMapping
-    public List<UrunBilgileri> getProductionInformation() {
-        return service.getAllUrunler();
-    }
-
     @GetMapping("/kredi/{krediNumarasi}")
     public ResponseEntity<List<UrunBilgileri>> getUrunlerByKrediNumarasi(@PathVariable String krediNumarasi) {
         List<UrunBilgileri> urunler = service.getUrunlerByKrediNumarasi(krediNumarasi);
