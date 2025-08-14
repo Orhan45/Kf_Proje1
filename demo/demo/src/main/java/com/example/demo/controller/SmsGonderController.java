@@ -19,8 +19,9 @@ public class SmsGonderController {
     @GetMapping("/records")
     public List<Map<String, Object>> getSmsRecords(
             @RequestParam(required = false) String phoneNumber,
+            @RequestParam(required = false) String smsKod,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
-        return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, startDate, endDate);
+        return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, smsKod, startDate, endDate);
     }
 }

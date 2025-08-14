@@ -1,4 +1,3 @@
-// dosya: demo/demo/src/test/java/com/example/demo/controller/SmsGonderControllerTest.java
 package com.example.demo.controller;
 
 import com.example.demo.service.SmsGonderService;
@@ -27,26 +26,29 @@ public class SmsGonderControllerTest {
 
     @Test
     void testGetSmsRecordsNoFilter() {
-        when(service.getSmsRecordsByPhoneAndDate(null, null, null))
+        when(service.getSmsRecordsByPhoneAndDate(null, null, null, null))
                 .thenReturn(Collections.emptyList());
-        List<Map<String, Object>> result = controller.getSmsRecords(null, null, null);
-        verify(service).getSmsRecordsByPhoneAndDate(null, null, null);
+        List<Map<String, Object>> result = controller.getSmsRecords(null, null, null, null);
+        verify(service).getSmsRecordsByPhoneAndDate(null, null, null, null);
         assertTrue(result.isEmpty());
     }
 
     @Test
     void testGetSmsRecordsWithParams() {
         String phone = "1234567890";
+        String smsKod = "TESTKOD";
         LocalDate startDate = LocalDate.of(2023, 10, 1);
         LocalDate endDate = LocalDate.of(2023, 10, 31);
         Map<String, Object> record = new HashMap<>();
         record.put("phoneNumber", phone);
-        record.put("date", LocalDate.now());
-        when(service.getSmsRecordsByPhoneAndDate(phone, startDate, endDate))
+        record.put("smsKod", smsKod);
+        record.put("insertDate", LocalDate.now());
+        when(service.getSmsRecordsByPhoneAndDate(phone, smsKod, startDate, endDate))
                 .thenReturn(List.of(record));
-        List<Map<String, Object>> result = controller.getSmsRecords(phone, startDate, endDate);
-        verify(service).getSmsRecordsByPhoneAndDate(phone, startDate, endDate);
+        List<Map<String, Object>> result = controller.getSmsRecords(phone, smsKod, startDate, endDate);
+        verify(service).getSmsRecordsByPhoneAndDate(phone, smsKod, startDate, endDate);
         assertEquals(1, result.size());
         assertEquals(phone, result.get(0).get("phoneNumber"));
+        assertEquals(smsKod, result.get(0).get("smsKod"));
     }
 }

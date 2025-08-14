@@ -18,14 +18,17 @@ public class SmsGonderService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
         String baseQuery = buildUnionQuery();
-        String filteredQuery = applyFilters(baseQuery, phoneNumber, startDate, endDate);
+        String filteredQuery = applyFilters(baseQuery, phoneNumber, smsKod, startDate, endDate);
 
         Query query = entityManager.createNativeQuery(filteredQuery);
 
         if (phoneNumber != null && !phoneNumber.isEmpty()) {
             query.setParameter("phoneNumber", phoneNumber);
+        }
+        if (smsKod != null && !smsKod.isEmpty()) {
+            query.setParameter("smsKod", smsKod);
         }
         if (startDate != null) {
             query.setParameter("startDate", Date.valueOf(startDate));
@@ -61,13 +64,16 @@ public class SmsGonderService {
                 "SELECT PHONE_NUMBER, MESSAGE_BODY, INSERT_DATE, SMS_KOD, GONDERILEN_PROG, 'SMS_GONDER_ESKI' AS KAYNAK_TABLO FROM SMS_GONDER_ESKI";
     }
 
-    private String applyFilters(String unionQuery, String phoneNumber, LocalDate startDate, LocalDate endDate) {
+    private String applyFilters(String unionQuery, String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
         StringBuilder sql = new StringBuilder("SELECT * FROM (")
                 .append(unionQuery)
                 .append(") t WHERE 1=1 ");
 
         if (phoneNumber != null && !phoneNumber.isEmpty()) {
             sql.append("AND PHONE_NUMBER = :phoneNumber ");
+        }
+        if (smsKod != null && !smsKod.isEmpty()) {
+            sql.append("AND SMS_KOD = :smsKod ");
         }
         if (startDate != null && endDate != null) {
             sql.append("AND INSERT_DATE BETWEEN :startDate AND :endDate ");
