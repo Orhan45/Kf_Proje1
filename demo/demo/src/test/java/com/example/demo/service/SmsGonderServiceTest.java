@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import java.sql.Timestamp;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +33,8 @@ class SmsGonderServiceTest {
     void testGetSmsRecordsByPhoneAndDate_withFilters() {
         String phoneNumber = "5551234567";
         String smsKod = "KOD1";
-        LocalDate startDate = LocalDate.of(2025, 8, 1);
-        LocalDate endDate = LocalDate.of(2025, 8, 11);
+        LocalDateTime startDate = LocalDateTime.of(2025, 8, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2025, 8, 11, 23, 59);
 
         List<Object[]> mockResults = Arrays.asList(
                 new Object[]{ "5551234567", "Mesaj 1", Timestamp.valueOf("2025-08-05 10:00:00"), "KOD1", "ServisA", "SMS_GONDER" },
@@ -42,7 +42,7 @@ class SmsGonderServiceTest {
         );
 
         when(entityManager.createNativeQuery(anyString())).thenReturn(query);
-        when(query.setParameter(eq("phoneNumber"), eq(phoneNumber))).thenReturn(query);
+        // Telefon numaraları dinamik parametreler ile gönderildiği için setParameter ayarlarını denetlemeye gerek kalmadan sonucunu döndürüyoruz.
         when(query.setParameter(eq("smsKod"), eq(smsKod))).thenReturn(query);
         when(query.setParameter(eq("startDate"), any())).thenReturn(query);
         when(query.setParameter(eq("endDate"), any())).thenReturn(query);

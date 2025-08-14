@@ -5,7 +5,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import org.springframework.stereotype.Service;
 import java.sql.Date;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +17,7 @@ public class SmsGonderService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
+    public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, String smsKod, LocalDateTime startDate, LocalDateTime endDate) {
         String baseQuery = buildUnionQuery();
         List<String> phoneNumbersToSearch = preparePhoneNumbersForSearch(phoneNumber);
         String filteredQuery = applyFilters(baseQuery, phoneNumbersToSearch, smsKod, startDate, endDate);
@@ -32,16 +32,15 @@ public class SmsGonderService {
             query.setParameter("smsKod", smsKod);
         }
         if (startDate != null) {
-            query.setParameter("startDate", Date.valueOf(startDate));
+            query.setParameter("startDate", Date.valueOf(startDate.toLocalDate()));
         }
         if (endDate != null) {
-            query.setParameter("endDate", Date.valueOf(endDate));
+            query.setParameter("endDate", Date.valueOf(endDate.toLocalDate()));
         }
 
         @SuppressWarnings("unchecked")
         List<Object[]> results = (List<Object[]>) query.getResultList();
         List<Map<String, Object>> dtoList = new ArrayList<>();
-
         for (Object[] row : results) {
             Map<String, Object> map = new HashMap<>();
             map.put("phoneNumber", row[0]);
@@ -65,8 +64,10 @@ public class SmsGonderService {
                 "SELECT PHONE_NUMBER, MESSAGE_BODY, INSERT_DATE, SMS_KOD, GONDERILEN_PROG, 'SMS_GONDER_ESKI' AS KAYNAK_TABLO FROM SMS_GONDER_ESKI";
     }
 
-    private String applyFilters(String unionQuery, List<String> phoneNumbers, String smsKod, LocalDate startDate, LocalDate endDate) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM (").append(unionQuery).append(") t WHERE 1=1 ");
+    private String applyFilters(String unionQuery, List<String> phoneNumbers, String smsKod, LocalDateTime startDate, LocalDateTime endDate) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM (")
+                .append(unionQuery)
+                .append(") t WHERE 1=1 ");
         if (phoneNumbers != null && !phoneNumbers.isEmpty()) {
             sql.append("AND (");
             for (int i = 0; i < phoneNumbers.size(); i++) {
@@ -91,19 +92,12 @@ public class SmsGonderService {
         return sql.toString();
     }
 
-    /**
-     * Girilen telefon numarasını normalize ederek 4 farklı formatta arama yapılmasını sağlar.
-     */
     private List<String> preparePhoneNumbersForSearch(String phoneNumber) {
         List<String> formats = new ArrayList<>();
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             return formats;
         }
-
-        // Sadece rakamları al
         String cleanedNumber = phoneNumber.replaceAll("[^0-9]", "");
-
-        // +90, 90, 0 gibi önekleri temizle
         if (phoneNumber.startsWith("+90") && cleanedNumber.length() == 12) {
             cleanedNumber = cleanedNumber.substring(2);
         } else if (cleanedNumber.length() == 12 && cleanedNumber.startsWith("90")) {
@@ -111,13 +105,10 @@ public class SmsGonderService {
         } else if (cleanedNumber.length() == 11 && cleanedNumber.startsWith("0")) {
             cleanedNumber = cleanedNumber.substring(1);
         }
-
-        // 10 haneli saf numarayı farklı formatlarda ekle
-        formats.add(cleanedNumber);               // 5050575494
-        formats.add("0" + cleanedNumber);         // 05050575494
-        formats.add("90" + cleanedNumber);        // 905050575494
-        formats.add("+90" + cleanedNumber);       // +905050575494
-
+        formats.add(cleanedNumber);
+        formats.add("0" + cleanedNumber);
+        formats.add("90" + cleanedNumber);
+        formats.add("+90" + cleanedNumber);
         return formats;
     }
 }

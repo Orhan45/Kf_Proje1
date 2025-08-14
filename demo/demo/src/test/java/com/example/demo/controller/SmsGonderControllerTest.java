@@ -4,7 +4,7 @@ import com.example.demo.service.SmsGonderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -37,12 +37,12 @@ public class SmsGonderControllerTest {
     void testGetSmsRecordsWithParams() {
         String phone = "1234567890";
         String smsKod = "TESTKOD";
-        LocalDate startDate = LocalDate.of(2023, 10, 1);
-        LocalDate endDate = LocalDate.of(2023, 10, 31);
+        LocalDateTime startDate = LocalDateTime.of(2023, 10, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 10, 31, 23, 59);
         Map<String, Object> record = new HashMap<>();
         record.put("phoneNumber", phone);
         record.put("smsKod", smsKod);
-        record.put("insertDate", LocalDate.now());
+        record.put("insertDate", LocalDateTime.now());
         when(service.getSmsRecordsByPhoneAndDate(phone, smsKod, startDate, endDate))
                 .thenReturn(List.of(record));
         List<Map<String, Object>> result = controller.getSmsRecords(phone, smsKod, startDate, endDate);
