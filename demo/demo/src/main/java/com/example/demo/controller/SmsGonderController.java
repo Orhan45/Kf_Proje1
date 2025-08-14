@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/sms")
 @RequiredArgsConstructor
-public class SmsGonderController {
+public class        SmsGonderController {
 
     private final SmsGonderService smsGonderService;
 
