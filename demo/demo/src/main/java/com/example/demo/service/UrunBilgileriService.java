@@ -21,10 +21,6 @@ public class UrunBilgileriService {
     private final UrunBilgileriRepository urunBilgileriRepository;
     private final EgmStateInformationRepository egmStateInformationRepository;
 
-    public List<UrunBilgileri> getAllUrunler() {
-        return urunBilgileriRepository.findAll();
-    }
-
     public List<UrunBilgileri> getUrunlerByKrediNumarasi(String krediNumarasi) {
         return urunBilgileriRepository.findByKrediNumarasi(krediNumarasi);
     }
@@ -35,9 +31,7 @@ public class UrunBilgileriService {
 
         if (existingUrunOptional.isPresent()) {
             UrunBilgileri existingUrun = existingUrunOptional.get();
-            // Yalnızca rehinDurum alanını güncelliyoruz
             existingUrun.setRehinDurum(urunBilgileri.getRehinDurum());
-            // ProductLineId'yi güncelleme satırı kaldırıldı.
             return urunBilgileriRepository.save(existingUrun);
         }
         return null;
@@ -48,14 +42,11 @@ public class UrunBilgileriService {
         List<EgmStateInformation> existingRecords = egmStateInformationRepository.findByProductLineId(productLineId);
 
         if (existingRecords.isEmpty()) {
-            // Eğer kayıt yoksa, false dönebiliriz.
             return false;
         }
 
-        // Mevcut kayıtları sil
         egmStateInformationRepository.deleteByProductLineId(productLineId);
 
-        // Yeni bir kayıt ekle
         EgmStateInformation newRecord = EgmStateInformation.builder()
                 .productLineId(productLineId)
                 .stateId(7)
@@ -79,7 +70,6 @@ public class UrunBilgileriService {
                     .map(List::of)
                     .orElse(Collections.emptyList());
         } else {
-            // Kredi numarasına ait tüm ürünleri getir
             urunler = urunBilgileriRepository.findByKrediNumarasi(krediNumarasi);
         }
 

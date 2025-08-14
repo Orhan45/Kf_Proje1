@@ -1,4 +1,3 @@
-// dosya: demo/demo/src/test/java/com/example/demo/controller/UrunBilgileriControllerTest.java
 package com.example.demo.controller;
 
 import com.example.demo.entity.UrunBilgileri;
@@ -8,10 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.http.ResponseEntity;
 import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class UrunBilgileriControllerTest {
+class UrunBilgileriControllerTest {
 
     @InjectMocks
     private UrunBilgileriController controller;
@@ -26,85 +26,125 @@ public class UrunBilgileriControllerTest {
         closeable = MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void testGetProductionInformation() {
-        List<UrunBilgileri> list = Arrays.asList(new UrunBilgileri(), new UrunBilgileri());
-        when(service.getAllUrunler()).thenReturn(list);
-        List<UrunBilgileri> result = controller.getProductionInformation();
-        verify(service).getAllUrunler();
-        assertEquals(2, result.size());
-    }
+    // --- getUrunlerByKrediNumarasi Metodu İçin Testler ---
 
     @Test
-    void testGetUrunlerByKrediNumarasi_NotFound() {
-        when(service.getUrunlerByKrediNumarasi("123")).thenReturn(Collections.emptyList());
-        ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi("123");
+    void testGetUrunlerByKrediNumarasi_shouldReturnNotFound_whenNoRecordsExist() {
+        String krediNumarasi = "kredi1";
+        when(service.getUrunlerByKrediNumarasi(krediNumarasi))
+                .thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi(krediNumarasi);
+
         assertEquals(404, response.getStatusCode().value());
-        verify(service).getUrunlerByKrediNumarasi("123");
+        verify(service).getUrunlerByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void testGetUrunlerByKrediNumarasi_Found() {
-        UrunBilgileri urun = new UrunBilgileri();
-        when(service.getUrunlerByKrediNumarasi("123")).thenReturn(List.of(urun));
-        ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi("123");
+    void testGetUrunlerByKrediNumarasi_shouldReturnOk_whenRecordsExist() {
+        String krediNumarasi = "kredi1";
+        List<UrunBilgileri> mockList = Arrays.asList(new UrunBilgileri(), new UrunBilgileri());
+        when(service.getUrunlerByKrediNumarasi(krediNumarasi))
+                .thenReturn(mockList);
+
+        ResponseEntity<List<UrunBilgileri>> response = controller.getUrunlerByKrediNumarasi(krediNumarasi);
+
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(1, response.getBody().size());
-        verify(service).getUrunlerByKrediNumarasi("123");
+        assertEquals(mockList, response.getBody());
+        verify(service).getUrunlerByKrediNumarasi(krediNumarasi);
     }
 
+    // --- getSiralarByKrediNumarasi Metodu İçin Testler ---
+
     @Test
-    void testGetSiralarByKrediNumarasi_NotFound() {
-        when(service.getSiralarByKrediNumarasi("123")).thenReturn(Collections.emptyList());
-        ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi("123");
+    void testGetSiralarByKrediNumarasi_shouldReturnNotFound_whenNoSiralarExist() {
+        String krediNumarasi = "kredi1";
+        when(service.getSiralarByKrediNumarasi(krediNumarasi))
+                .thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi(krediNumarasi);
+
         assertEquals(404, response.getStatusCode().value());
-        verify(service).getSiralarByKrediNumarasi("123");
+        verify(service).getSiralarByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void testGetSiralarByKrediNumarasi_Found() {
-        when(service.getSiralarByKrediNumarasi("123")).thenReturn(List.of(1, 2, 3));
-        ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi("123");
+    void testGetSiralarByKrediNumarasi_shouldReturnOk_whenSiralarExist() {
+        String krediNumarasi = "kredi1";
+        List<Integer> mockList = Arrays.asList(1, 2, 3);
+        when(service.getSiralarByKrediNumarasi(krediNumarasi))
+                .thenReturn(mockList);
+
+        ResponseEntity<List<Integer>> response = controller.getSiralarByKrediNumarasi(krediNumarasi);
+
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(3, response.getBody().size());
-        verify(service).getSiralarByKrediNumarasi("123");
+        assertEquals(mockList, response.getBody());
+        verify(service).getSiralarByKrediNumarasi(krediNumarasi);
     }
 
+    // --- updateUrunBilgileri Metodu İçin Testler ---
+
     @Test
-    void testUpdateUrunBilgileri_NotFound() {
-        when(service.updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class))).thenReturn(null);
-        ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri("123", 1, new UrunBilgileri());
+    void testUpdateUrunBilgileri_shouldReturnNotFound_whenRecordDoesNotExist() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        UrunBilgileri updateData = new UrunBilgileri();
+
+        when(service.updateUrunBilgileri(eq(krediNumarasi), eq(sira), any(UrunBilgileri.class)))
+                .thenReturn(null);
+
+        ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri(krediNumarasi, sira, updateData);
+
         assertEquals(404, response.getStatusCode().value());
-        verify(service).updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class));
+        verify(service).updateUrunBilgileri(eq(krediNumarasi), eq(sira), any(UrunBilgileri.class));
     }
 
     @Test
-    void testUpdateUrunBilgileri_Success() {
-        UrunBilgileri urun = new UrunBilgileri();
-        when(service.updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class))).thenReturn(urun);
-        ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri("123", 1, new UrunBilgileri());
+    void testUpdateUrunBilgileri_shouldReturnOk_whenRecordIsUpdated() {
+        String krediNumarasi = "kredi1";
+        Integer sira = 1;
+        UrunBilgileri updateData = new UrunBilgileri();
+        UrunBilgileri updatedEntity = new UrunBilgileri();
+
+        when(service.updateUrunBilgileri(eq(krediNumarasi), eq(sira), any(UrunBilgileri.class)))
+                .thenReturn(updatedEntity);
+
+        ResponseEntity<UrunBilgileri> response = controller.updateUrunBilgileri(krediNumarasi, sira, updateData);
+
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(urun, response.getBody());
-        verify(service).updateUrunBilgileri(eq("123"), eq(1), any(UrunBilgileri.class));
+        assertEquals(updatedEntity, response.getBody());
+        verify(service).updateUrunBilgileri(eq(krediNumarasi), eq(sira), any(UrunBilgileri.class));
     }
 
+    // --- deleteAndReinsertEgmStateInformationByKrediNumarasi Metodu İçin Testler ---
+
     @Test
-    void testDeleteAndReinsertEgmStateInformation_NotFound() {
-        when(service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", null))
-                .thenReturn("Kredi numarası bulunamadı");
-        ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi("123", null);
+    void testDeleteAndReinsertEgmStateInformationByKrediNumarasi_shouldReturnNotFound_whenRecordsDoNotExist() {
+        String krediNumarasi = "kredi1";
+        String responseMessage = "Kredi numarası: kredi1 ile eşleşen kayıt bulunamadı.";
+
+        when(service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(eq(krediNumarasi), any()))
+                .thenReturn(responseMessage);
+
+        ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi(krediNumarasi, null);
+
         assertEquals(404, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("bulunamadı"));
-        verify(service).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", null);
+        assertEquals(responseMessage, response.getBody());
+        verify(service).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(eq(krediNumarasi), any());
     }
 
     @Test
-    void testDeleteAndReinsertEgmStateInformation_Success() {
-        when(service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", 1))
-                .thenReturn("Silme ve yeniden ekleme işlemi tamamlandı");
-        ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi("123", 1);
+    void testDeleteAndReinsertEgmStateInformationByKrediNumarasi_shouldReturnOk_whenRecordsExist() {
+        String krediNumarasi = "kredi1";
+        String responseMessage = "Kredi numarası: kredi1 için EgmStateInformation başarıyla güncellendi.";
+
+        when(service.deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(eq(krediNumarasi), any()))
+                .thenReturn(responseMessage);
+
+        ResponseEntity<String> response = controller.deleteAndReinsertEgmStateInformationByKrediNumarasi(krediNumarasi, null);
+
         assertEquals(200, response.getStatusCode().value());
-        assertTrue(response.getBody().contains("tamamlandı"));
-        verify(service).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira("123", 1);
+        assertEquals(responseMessage, response.getBody());
+        verify(service).deleteAndReinsertEgmStateInformationByKrediNumarasiAndSira(eq(krediNumarasi), any());
     }
 }

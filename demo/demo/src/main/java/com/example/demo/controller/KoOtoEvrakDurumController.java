@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/kootoevrakdurum")
@@ -16,15 +15,6 @@ public class KoOtoEvrakDurumController {
 
     private final KoOtoEvrakDurumService koOtoService;
 
-    @GetMapping
-    public ResponseEntity<List<KoOtoEvrakDurum>> getAllKoOtoEvrakDurum() {
-        List<KoOtoEvrakDurum> list = koOtoService.findAll();
-        if (list.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(list);
-    }
-
     @GetMapping("/kredi/{krediNumarasi}")
     public ResponseEntity<List<KoOtoEvrakDurum>> getKoOtoEvrakDurumByKrediNumarasi(@PathVariable String krediNumarasi) {
         List<KoOtoEvrakDurum> list = koOtoService.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
@@ -32,15 +22,6 @@ public class KoOtoEvrakDurumController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(list);
-    }
-
-    @GetMapping("/{krediNumarasi}/{evrakKodu}")
-    public ResponseEntity<KoOtoEvrakDurum> getKoOtoEvrakDurumByKrediAndEvrakKodu(
-            @PathVariable String krediNumarasi,
-            @PathVariable String evrakKodu) {
-        Optional<KoOtoEvrakDurum> optionalEvrak = koOtoService.getKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu);
-        return optionalEvrak.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/update/{krediNumarasi}/{evrakKodu}")

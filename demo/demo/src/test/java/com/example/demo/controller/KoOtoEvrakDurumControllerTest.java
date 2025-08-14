@@ -1,4 +1,3 @@
-// dosya: demo/demo/src/test/java/com/example/demo/controller/KoOtoEvrakDurumControllerTest.java
 package com.example.demo.controller;
 
 import com.example.demo.entity.KoOtoEvrakDurum;
@@ -8,10 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.http.ResponseEntity;
 import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class KoOtoEvrakDurumControllerTest {
+class KoOtoEvrakDurumControllerTest {
 
     @InjectMocks
     private KoOtoEvrakDurumController controller;
@@ -26,81 +26,89 @@ public class KoOtoEvrakDurumControllerTest {
         closeable = MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void testGetAllKoOtoEvrakDurum_NotFound() {
-        when(service.findAll()).thenReturn(Collections.emptyList());
-        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getAllKoOtoEvrakDurum();
-        assertEquals(404, response.getStatusCode().value());
-        verify(service).findAll();
-    }
+    // --- getKoOtoEvrakDurumByKrediNumarasi Metodu İçin Testler ---
 
     @Test
-    void testGetAllKoOtoEvrakDurum_Found() {
-        List<KoOtoEvrakDurum> list = Arrays.asList(new KoOtoEvrakDurum(), new KoOtoEvrakDurum());
-        when(service.findAll()).thenReturn(list);
-        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getAllKoOtoEvrakDurum();
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(2, response.getBody().size());
-        verify(service).findAll();
-    }
-
-    @Test
-    void testGetKoOtoEvrakDurumByKrediNumarasi_NotFound() {
-        when(service.getKoOtoEvrakDurumByKrediNumarasi("123"))
+    void testGetKoOtoEvrakDurumByKrediNumarasi_shouldReturnNotFound_whenNoRecordsExist() {
+        // Hazırlık: Servis metodu boş bir liste döndürdüğünde ne olacağını test ediyoruz.
+        String krediNumarasi = "123";
+        when(service.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi))
                 .thenReturn(Collections.emptyList());
-        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi("123");
+
+        // Çalıştırma
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
+
+        // Kontrol: Dönüş kodunun 404 (Not Found) olduğunu doğrula
         assertEquals(404, response.getStatusCode().value());
-        verify(service).getKoOtoEvrakDurumByKrediNumarasi("123");
+
+        // Kontrol: Servis metodunun doğru parametreyle çağrıldığını doğrula
+        verify(service).getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
     }
 
     @Test
-    void testGetKoOtoEvrakDurumByKrediNumarasi_Found() {
-        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
-        when(service.getKoOtoEvrakDurumByKrediNumarasi("123"))
-                .thenReturn(List.of(evrak));
-        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi("123");
+    void testGetKoOtoEvrakDurumByKrediNumarasi_shouldReturnOk_whenRecordsExist() {
+        // Hazırlık: Servis metodu dolu bir liste döndürdüğünde ne olacağını test ediyoruz.
+        String krediNumarasi = "123";
+        List<KoOtoEvrakDurum> mockList = Arrays.asList(new KoOtoEvrakDurum(), new KoOtoEvrakDurum());
+        when(service.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi))
+                .thenReturn(mockList);
+
+        // Çalıştırma
+        ResponseEntity<List<KoOtoEvrakDurum>> response = controller.getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
+
+        // Kontrol: Dönüş kodunun 200 (OK) olduğunu doğrula
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(1, response.getBody().size());
-        verify(service).getKoOtoEvrakDurumByKrediNumarasi("123");
+
+        // Kontrol: Dönüş gövdesinin beklenen listeyle aynı olduğunu doğrula
+        assertEquals(mockList, response.getBody());
+
+        // Kontrol: Servis metodunun doğru parametreyle çağrıldığını doğrula
+        verify(service).getKoOtoEvrakDurumByKrediNumarasi(krediNumarasi);
     }
 
-    @Test
-    void testGetKoOtoEvrakDurumByKrediAndEvrakKodu_NotFound() {
-        when(service.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1"))
-                .thenReturn(Optional.empty());
-        ResponseEntity<KoOtoEvrakDurum> response = controller.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
-        assertEquals(404, response.getStatusCode().value());
-        verify(service).getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
-    }
+    // --- updateKoOtoEvrakDurumByKrediAndEvrakKodu Metodu İçin Testler ---
 
     @Test
-    void testGetKoOtoEvrakDurumByKrediAndEvrakKodu_Found() {
-        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
-        when(service.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1"))
-                .thenReturn(Optional.of(evrak));
-        ResponseEntity<KoOtoEvrakDurum> response = controller.getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
-        assertEquals(200, response.getStatusCode().value());
-        assertEquals(evrak, response.getBody());
-        verify(service).getKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1");
-    }
+    void testUpdateKoOtoEvrakDurumByKrediAndEvrakKodu_shouldReturnNotFound_whenRecordDoesNotExist() {
+        // Hazırlık: Servis metodu null döndürdüğünde (kayıt bulunamadığında) ne olacağını test ediyoruz.
+        String krediNumarasi = "123";
+        String evrakKodu = "E1";
+        KoOtoEvrakDurum updateData = new KoOtoEvrakDurum();
 
-    @Test
-    void testUpdateKoOtoEvrakDurumByKrediAndEvrakKodu_NotFound() {
-        when(service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class)))
+        when(service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq(krediNumarasi), eq(evrakKodu), any(KoOtoEvrakDurum.class)))
                 .thenReturn(null);
-        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", new KoOtoEvrakDurum());
+
+        // Çalıştırma
+        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+
+        // Kontrol: Dönüş kodunun 404 (Not Found) olduğunu doğrula
         assertEquals(404, response.getStatusCode().value());
-        verify(service).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class));
+
+        // Kontrol: Servis metodunun doğru parametrelerle çağrıldığını doğrula
+        verify(service).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq(krediNumarasi), eq(evrakKodu), any(KoOtoEvrakDurum.class));
     }
 
     @Test
-    void testUpdateKoOtoEvrakDurumByKrediAndEvrakKodu_Found() {
-        KoOtoEvrakDurum evrak = new KoOtoEvrakDurum();
-        when(service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class)))
-                .thenReturn(evrak);
-        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu("123", "E1", new KoOtoEvrakDurum());
+    void testUpdateKoOtoEvrakDurumByKrediAndEvrakKodu_shouldReturnOk_whenRecordIsUpdated() {
+        // Hazırlık: Servis metodu güncellenmiş bir nesne döndürdüğünde ne olacağını test ediyoruz.
+        String krediNumarasi = "123";
+        String evrakKodu = "E1";
+        KoOtoEvrakDurum updateData = new KoOtoEvrakDurum();
+        KoOtoEvrakDurum updatedEntity = new KoOtoEvrakDurum();
+
+        when(service.updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq(krediNumarasi), eq(evrakKodu), any(KoOtoEvrakDurum.class)))
+                .thenReturn(updatedEntity);
+
+        // Çalıştırma
+        ResponseEntity<KoOtoEvrakDurum> response = controller.updateKoOtoEvrakDurumByKrediAndEvrakKodu(krediNumarasi, evrakKodu, updateData);
+
+        // Kontrol: Dönüş kodunun 200 (OK) olduğunu doğrula
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(evrak, response.getBody());
-        verify(service).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq("123"), eq("E1"), any(KoOtoEvrakDurum.class));
+
+        // Kontrol: Dönüş gövdesinin beklenen nesneyle aynı olduğunu doğrula
+        assertEquals(updatedEntity, response.getBody());
+
+        // Kontrol: Servis metodunun doğru parametrelerle çağrıldığını doğrula
+        verify(service).updateKoOtoEvrakDurumByKrediAndEvrakKodu(eq(krediNumarasi), eq(evrakKodu), any(KoOtoEvrakDurum.class));
     }
 }
