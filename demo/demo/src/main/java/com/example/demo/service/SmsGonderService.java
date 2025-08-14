@@ -20,12 +20,17 @@ public class SmsGonderService {
 
     public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
         String baseQuery = buildUnionQuery();
-        String filteredQuery = applyFilters(baseQuery, phoneNumber, smsKod, startDate, endDate);
+
+        // This is a new helper method to generate all possible phone number formats
+        List<String> phoneNumbersToSearch = preparePhoneNumbersForSearch(phoneNumber);
+
+        String filteredQuery = applyFilters(baseQuery, phoneNumbersToSearch, smsKod, startDate, endDate);
 
         Query query = entityManager.createNativeQuery(filteredQuery);
 
-        if (phoneNumber != null && !phoneNumber.isEmpty()) {
-            query.setParameter("phoneNumber", phoneNumber);
+        // Bind parameters
+        if (!phoneNumbersToSearch.isEmpty()) {
+            query.setParameter("phoneNumbers", phoneNumbersToSearch);
         }
         if (smsKod != null && !smsKod.isEmpty()) {
             query.setParameter("smsKod", smsKod);
@@ -64,13 +69,14 @@ public class SmsGonderService {
                 "SELECT PHONE_NUMBER, MESSAGE_BODY, INSERT_DATE, SMS_KOD, GONDERILEN_PROG, 'SMS_GONDER_ESKI' AS KAYNAK_TABLO FROM SMS_GONDER_ESKI";
     }
 
-    private String applyFilters(String unionQuery, String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
+    private String applyFilters(String unionQuery, List<String> phoneNumbers, String smsKod, LocalDate startDate, LocalDate endDate) {
         StringBuilder sql = new StringBuilder("SELECT * FROM (")
                 .append(unionQuery)
                 .append(") t WHERE 1=1 ");
 
-        if (phoneNumber != null && !phoneNumber.isEmpty()) {
-            sql.append("AND PHONE_NUMBER = :phoneNumber ");
+        // Updated filter logic for phone numbers
+        if (phoneNumbers != null && !phoneNumbers.isEmpty()) {
+            sql.append("AND PHONE_NUMBER IN (:phoneNumbers) ");
         }
         if (smsKod != null && !smsKod.isEmpty()) {
             sql.append("AND SMS_KOD = :smsKod ");
@@ -84,5 +90,42 @@ public class SmsGonderService {
         }
         sql.append("ORDER BY INSERT_DATE DESC");
         return sql.toString();
+    }
+
+    /**
+     * Helper method to generate a list of all possible phone number formats.
+     * It handles a number entered as 05..., 5..., or +905...
+     */
+    private List<String> preparePhoneNumbersForSearch(String phoneNumber) {
+        List<String> formats = new ArrayList<>();
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return formats;
+        }
+
+        // Remove all non-digit characters
+        String cleanedNumber = phoneNumber.replaceAll("[^0-9]", "");
+
+        if (cleanedNumber.isEmpty()) {
+            return formats;
+        }
+
+        // Base case: If number starts with 0 and is 11 digits, or is 10 digits
+        if (cleanedNumber.length() == 11 && cleanedNumber.startsWith("0")) {
+            formats.add(cleanedNumber); // e.g., 05123456789
+            formats.add(cleanedNumber.substring(1)); // e.g., 5123456789
+            formats.add("+90" + cleanedNumber.substring(1)); // e.g., +905123456789
+        } else if (cleanedNumber.length() == 10) {
+            formats.add(cleanedNumber); // e.g., 5123456789
+            formats.add("0" + cleanedNumber); // e.g., 05123456789
+            formats.add("+90" + cleanedNumber); // e.g., +905123456789
+        } else if (cleanedNumber.length() == 12 && cleanedNumber.startsWith("90")) {
+            formats.add(cleanedNumber); // e.g., 905123456789
+            formats.add("0" + cleanedNumber.substring(2)); // e.g., 05123456789
+            formats.add("+" + cleanedNumber); // e.g., +905123456789
+        } else {
+            // For any other format, just use the cleaned number as a fallback
+            formats.add(cleanedNumber);
+        }
+        return formats;
     }
 }

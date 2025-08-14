@@ -24,4 +24,5 @@ public class        SmsGonderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate endDate) {
         return smsGonderService.getSmsRecordsByPhoneAndDate(phoneNumber, smsKod, startDate, endDate);
     }
+
 }
