@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import org.springframework.stereotype.Service;
-
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -20,17 +19,14 @@ public class SmsGonderService {
 
     public List<Map<String, Object>> getSmsRecordsByPhoneAndDate(String phoneNumber, String smsKod, LocalDate startDate, LocalDate endDate) {
         String baseQuery = buildUnionQuery();
-
-        // This is a new helper method to generate all possible phone number formats
         List<String> phoneNumbersToSearch = preparePhoneNumbersForSearch(phoneNumber);
-
         String filteredQuery = applyFilters(baseQuery, phoneNumbersToSearch, smsKod, startDate, endDate);
-
         Query query = entityManager.createNativeQuery(filteredQuery);
 
-        // Bind parameters
-        if (!phoneNumbersToSearch.isEmpty()) {
-            query.setParameter("phoneNumbers", phoneNumbersToSearch);
+        if (phoneNumbersToSearch != null && !phoneNumbersToSearch.isEmpty()) {
+            for (int i = 0; i < phoneNumbersToSearch.size(); i++) {
+                query.setParameter("phoneNumber" + i, phoneNumbersToSearch.get(i));
+            }
         }
         if (smsKod != null && !smsKod.isEmpty()) {
             query.setParameter("smsKod", smsKod);
@@ -44,8 +40,8 @@ public class SmsGonderService {
 
         @SuppressWarnings("unchecked")
         List<Object[]> results = (List<Object[]>) query.getResultList();
-
         List<Map<String, Object>> dtoList = new ArrayList<>();
+
         for (Object[] row : results) {
             Map<String, Object> map = new HashMap<>();
             map.put("phoneNumber", row[0]);
@@ -70,13 +66,16 @@ public class SmsGonderService {
     }
 
     private String applyFilters(String unionQuery, List<String> phoneNumbers, String smsKod, LocalDate startDate, LocalDate endDate) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM (")
-                .append(unionQuery)
-                .append(") t WHERE 1=1 ");
-
-        // Updated filter logic for phone numbers
+        StringBuilder sql = new StringBuilder("SELECT * FROM (").append(unionQuery).append(") t WHERE 1=1 ");
         if (phoneNumbers != null && !phoneNumbers.isEmpty()) {
-            sql.append("AND PHONE_NUMBER IN (:phoneNumbers) ");
+            sql.append("AND (");
+            for (int i = 0; i < phoneNumbers.size(); i++) {
+                sql.append("PHONE_NUMBER = :phoneNumber").append(i);
+                if (i < phoneNumbers.size() - 1) {
+                    sql.append(" OR ");
+                }
+            }
+            sql.append(") ");
         }
         if (smsKod != null && !smsKod.isEmpty()) {
             sql.append("AND SMS_KOD = :smsKod ");
@@ -93,8 +92,7 @@ public class SmsGonderService {
     }
 
     /**
-     * Helper method to generate a list of all possible phone number formats.
-     * It handles a number entered as 05..., 5..., or +905...
+     * Girilen telefon numarasını normalize ederek 4 farklı formatta arama yapılmasını sağlar.
      */
     private List<String> preparePhoneNumbersForSearch(String phoneNumber) {
         List<String> formats = new ArrayList<>();
@@ -102,30 +100,24 @@ public class SmsGonderService {
             return formats;
         }
 
-        // Remove all non-digit characters
+        // Sadece rakamları al
         String cleanedNumber = phoneNumber.replaceAll("[^0-9]", "");
 
-        if (cleanedNumber.isEmpty()) {
-            return formats;
+        // +90, 90, 0 gibi önekleri temizle
+        if (phoneNumber.startsWith("+90") && cleanedNumber.length() == 12) {
+            cleanedNumber = cleanedNumber.substring(2);
+        } else if (cleanedNumber.length() == 12 && cleanedNumber.startsWith("90")) {
+            cleanedNumber = cleanedNumber.substring(2);
+        } else if (cleanedNumber.length() == 11 && cleanedNumber.startsWith("0")) {
+            cleanedNumber = cleanedNumber.substring(1);
         }
 
-        // Base case: If number starts with 0 and is 11 digits, or is 10 digits
-        if (cleanedNumber.length() == 11 && cleanedNumber.startsWith("0")) {
-            formats.add(cleanedNumber); // e.g., 05123456789
-            formats.add(cleanedNumber.substring(1)); // e.g., 5123456789
-            formats.add("+90" + cleanedNumber.substring(1)); // e.g., +905123456789
-        } else if (cleanedNumber.length() == 10) {
-            formats.add(cleanedNumber); // e.g., 5123456789
-            formats.add("0" + cleanedNumber); // e.g., 05123456789
-            formats.add("+90" + cleanedNumber); // e.g., +905123456789
-        } else if (cleanedNumber.length() == 12 && cleanedNumber.startsWith("90")) {
-            formats.add(cleanedNumber); // e.g., 905123456789
-            formats.add("0" + cleanedNumber.substring(2)); // e.g., 05123456789
-            formats.add("+" + cleanedNumber); // e.g., +905123456789
-        } else {
-            // For any other format, just use the cleaned number as a fallback
-            formats.add(cleanedNumber);
-        }
+        // 10 haneli saf numarayı farklı formatlarda ekle
+        formats.add(cleanedNumber);               // 5050575494
+        formats.add("0" + cleanedNumber);         // 05050575494
+        formats.add("90" + cleanedNumber);        // 905050575494
+        formats.add("+90" + cleanedNumber);       // +905050575494
+
         return formats;
     }
 }
